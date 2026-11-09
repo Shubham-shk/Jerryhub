@@ -1,0 +1,164 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="820" viewBox="0 0 1920 820" preserveAspectRatio="xMidYMid slice" role="img" aria-label="MIDNIGHT VELVET - 真夜中のベルベット">
+  <defs>
+    <linearGradient id="bGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#140416"/>
+      <stop offset="45%" stop-color="#060309"/>
+      <stop offset="100%" stop-color="#020104"/>
+    </linearGradient>
+    <radialGradient id="bAura1" cx="0.75" cy="0.4" r="0.6">
+      <stop offset="0%" stop-color="#ff2d78" stop-opacity="0.45"/>
+      <stop offset="60%" stop-color="#c084fc" stop-opacity="0.1"/>
+      <stop offset="100%" stop-color="transparent" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="bAura2" cx="0.2" cy="0.8" r="0.5">
+      <stop offset="0%" stop-color="#f59e0b" stop-opacity="0.25"/>
+      <stop offset="100%" stop-color="transparent" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- Diagonal Hero Beam -->
+    <linearGradient id="bBeam" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#ff2d78" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="transparent" stop-opacity="0"/>
+    </linearGradient>
+
+    <!-- Halftone grid -->
+    <pattern id="bDots" width="24" height="24" patternUnits="userSpaceOnUse">
+      <circle cx="3" cy="3" r="1.5" fill="#ff2d78" opacity="0.14"/>
+    </pattern>
+    <pattern id="bGrid" width="60" height="60" patternUnits="userSpaceOnUse">
+      <path d="M 60 0 L 0 0 0 60" fill="none" stroke="#c084fc" stroke-width="0.7" opacity="0.08"/>
+    </pattern>
+
+    <linearGradient id="bVignette" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#030206" stop-opacity="0.95"/>
+      <stop offset="40%" stop-color="#030206" stop-opacity="0.65"/>
+      <stop offset="80%" stop-color="#030206" stop-opacity="0.15"/>
+      <stop offset="100%" stop-color="#030206" stop-opacity="0.4"/>
+    </linearGradient>
+    <linearGradient id="bBottomFade" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#030206" stop-opacity="0"/>
+      <stop offset="70%" stop-color="#030206" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#030206" stop-opacity="0.95"/>
+    </linearGradient>
+
+    <filter id="glowBlur">
+      <feGaussianBlur stdDeviation="40"/>
+    </filter>
+  </defs>
+
+  <rect width="1920" height="820" fill="url(#bGrad)"/>
+  <rect width="1920" height="820" fill="url(#bDots)"/>
+  <rect width="1920" height="820" fill="url(#bGrid)"/>
+  <rect width="1920" height="820" fill="url(#bAura1)"/>
+  <rect width="1920" height="820" fill="url(#bAura2)"/>
+
+  <!-- Dramatic Anime City / Background Silhouette -->
+  <g opacity="0.3" fill="#040207">
+    <rect x="768" y="410" width="120" height="410"/>
+    <rect x="921.5999999999999" y="344.4" width="90" height="475.59999999999997"/>
+    <rect x="1056" y="451.00000000000006" width="150" height="369"/>
+    <rect x="1248" y="311.6" width="140" height="508.4"/>
+    <rect x="1420.8" y="393.59999999999997" width="110" height="426.40000000000003"/>
+    <rect x="1574.3999999999999" y="278.8" width="160" height="541.2"/>
+  </g>
+
+  <!-- Diagonal Cyber Beams -->
+  <path d="M480,820 L1248,-100 L1497.6000000000001,-100 L729.6,820 Z" fill="url(#bBeam)" opacity="0.4"/>
+  <path d="M960,820 L1632,-100 L1766.4,-100 L1094.3999999999999,820 Z" fill="url(#bBeam)" opacity="0.2"/>
+
+  <!-- Giant Japanese Typography in Background -->
+  <text x="1632" y="492" font-family="'Sora', sans-serif" font-size="196.79999999999998" font-weight="900" 
+        fill="#ff2d78" opacity="0.12" text-anchor="middle">真夜中のベルベット</text>
+
+  <!-- Multi-panel diagonal framing accents -->
+  <polygon points="864,0 998.4000000000001,0 480,820 345.59999999999997,820" fill="#ff2d78" opacity="0.35"/>
+  <polygon points="998.4000000000001,0 1017.6,0 499.20000000000005,820 480,820" fill="#fff" opacity="0.6"/>
+
+  <!-- Featured Character Render on Right Side -->
+  
+    <!-- Anime Character Silhouette & Face Group -->
+    <g transform="translate(1382.3999999999999, 393.59999999999997) scale(-1.312, 1.312)" opacity="0.95">
+      <!-- Glow aura behind hair -->
+      <ellipse cx="0" cy="-60" rx="200" ry="240" fill="#ff2d78" opacity="0.18" filter="url(#glowBlur)"/>
+      
+      <!-- Back hair volume -->
+      <path d="M-140,-40 C-220,60 -190,260 -120,400 C-110,320 -100,240 -80,180 C-40,290 20,380 90,440 C80,310 90,220 130,160 C170,260 210,370 240,430 C200,250 210,60 140,-40 Z" 
+            fill="#c084fc" opacity="0.45"/>
+
+      <!-- Body / Collar / Shoulders -->
+      <path d="M-130,220 C-110,180 -70,160 -40,150 L-30,130 L30,130 L40,150 C70,160 110,180 130,220 L160,380 L-160,380 Z" 
+            fill="#050308" stroke="#ff2d78" stroke-width="1.5" stroke-opacity="0.3"/>
+      
+      <!-- Neck -->
+      <path d="M-30,100 L-30,145 C-10,155 10,155 30,145 L30,100 Z" fill="#08050c"/>
+      <path d="M-18,125 C-5,135 5,135 18,125" fill="none" stroke="#ff2d78" stroke-width="1" opacity="0.4"/>
+
+      <!-- Jaw / Face contour -->
+      <path d="M-68,0 C-72,45 -55,95 0,122 C55,95 72,45 68,0 C65,-50 -65,-50 -68,0 Z" 
+            fill="#090610" stroke="#ff2d78" stroke-width="2" stroke-opacity="0.4"/>
+
+      <!-- Ear details -->
+      <path d="M-70,15 C-85,20 -82,50 -66,55" fill="none" stroke="#ff2d78" stroke-width="1.5" opacity="0.5"/>
+      <path d="M68,15 C85,20 82,50 66,55" fill="none" stroke="#ff2d78" stroke-width="1.5" opacity="0.5"/>
+
+      <!-- Anime Eyes - Stylized dramatic gaze -->
+      <!-- Left Eye -->
+      <g transform="translate(-34, 25)">
+        <path d="M-24,-4 C-10,-14 10,-12 18,-2 C16,4 4,8 -6,6 C-14,5 -20,2 -24,-4 Z" fill="#fff" opacity="0.9"/>
+        <!-- Iris -->
+        <ellipse cx="-2" cy="-2" rx="9" ry="11" fill="#fb7185"/>
+        <ellipse cx="-2" cy="-2" rx="6" ry="8" fill="#030005"/>
+        <!-- Pupil shine / catchlights -->
+        <circle cx="-5" cy="-5" r="3" fill="#fff" opacity="0.95"/>
+        <circle cx="2" cy="1" r="1.5" fill="#fff" opacity="0.8"/>
+        <!-- Upper Eyelash line -->
+        <path d="M-28,-2 C-14,-17 12,-15 22,-2" fill="none" stroke="#ff2d78" stroke-width="3.5" stroke-linecap="round"/>
+        <path d="M-24,-1 C-12,-13 8,-12 18,-1" fill="none" stroke="#fff" stroke-width="1.2"/>
+        <!-- Double eyelid crease -->
+        <path d="M-18,-17 C-8,-23 6,-22 14,-15" fill="none" stroke="#c084fc" stroke-width="1" opacity="0.7"/>
+        <!-- Eyelash wing -->
+        <path d="M19,-4 L27,-8" stroke="#ff2d78" stroke-width="2.5" stroke-linecap="round"/>
+      </g>
+
+      <!-- Right Eye -->
+      <g transform="translate(34, 25)">
+        <path d="M24,-4 C10,-14 -10,-12 -18,-2 C-16,4 -4,8 6,6 C14,5 20,2 24,-4 Z" fill="#fff" opacity="0.9"/>
+        <!-- Iris -->
+        <ellipse cx="2" cy="-2" rx="9" ry="11" fill="#fb7185"/>
+        <ellipse cx="2" cy="-2" rx="6" ry="8" fill="#030005"/>
+        <!-- Pupil shine / catchlights -->
+        <circle cx="-1" cy="-5" r="3" fill="#fff" opacity="0.95"/>
+        <circle cx="5" cy="1" r="1.5" fill="#fff" opacity="0.8"/>
+        <!-- Upper Eyelash line -->
+        <path d="M28,-2 C14,-17 -12,-15 -22,-2" fill="none" stroke="#ff2d78" stroke-width="3.5" stroke-linecap="round"/>
+        <path d="M24,-1 C12,-13 -8,-12 -18,-1" fill="none" stroke="#fff" stroke-width="1.2"/>
+        <!-- Double eyelid crease -->
+        <path d="M18,-17 C8,-23 -6,-22 -14,-15" fill="none" stroke="#c084fc" stroke-width="1" opacity="0.7"/>
+        <!-- Eyelash wing -->
+        <path d="M-19,-4 L-27,-8" stroke="#ff2d78" stroke-width="2.5" stroke-linecap="round"/>
+      </g>
+
+      <!-- Delicate Nose & Lips -->
+      <path d="M-2,55 L2,65 L-1,67" fill="none" stroke="#c084fc" stroke-width="1.5" stroke-linecap="round" opacity="0.6"/>
+      <path d="M-12,88 C-4,86 4,86 12,88" fill="none" stroke="#ff2d78" stroke-width="2" stroke-linecap="round"/>
+      <path d="M-6,95 C-2,98 2,98 6,95" fill="none" stroke="#c084fc" stroke-width="1.2" opacity="0.7"/>
+
+      <!-- Front Bangs / Hair Strands (Anime Framing) -->
+      <path d="M-85,-20 C-95,-120 0,-150 85,-20 C95,50 80,110 75,130 C65,70 60,30 50,-10 C40,40 35,90 25,120 C15,60 10,20 0,-20 C-10,30 -20,80 -35,125 C-45,65 -55,20 -65,-10 C-75,40 -80,90 -85,125 Z" 
+            fill="#060309" stroke="#ff2d78" stroke-width="1.5"/>
+      <!-- Glowing hair rim lines -->
+      <path d="M-80,-20 C-50,-130 50,-130 80,-20" fill="none" stroke="#ff2d78" stroke-width="2" opacity="0.8"/>
+      <path d="M-65,0 C-35,-100 35,-100 65,0" fill="none" stroke="#c084fc" stroke-width="1.2" opacity="0.6"/>
+      <path d="M0,-120 L5,20" fill="none" stroke="#fff" stroke-width="0.8" opacity="0.3"/>
+      <path d="M-40,-80 L-30,40" fill="none" stroke="#ff2d78" stroke-width="1" opacity="0.5"/>
+      <path d="M40,-80 L30,40" fill="none" stroke="#c084fc" stroke-width="1" opacity="0.5"/>
+
+      <!-- Cybernetic / Magical Headpiece / Visor Accent -->
+      
+    </g>
+  
+
+  <!-- Left Side Vignette to ensure text readability -->
+  <rect width="1920" height="820" fill="url(#bVignette)"/>
+  <rect width="1920" height="820" fill="url(#bBottomFade)"/>
+</svg>

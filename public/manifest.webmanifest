@@ -1,0 +1,25 @@
+{
+  "name": "Jerryhub — Premium Anime Entertainment",
+  "short_name": "Jerryhub",
+  "description": "Premium anime entertainment starting at $5. Basic Access from $5 or Full Access for $9.50.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a0a0c",
+  "theme_color": "#0a0a0c",
+  "orientation": "portrait-primary",
+  "categories": ["entertainment"],
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ]
+}

@@ -1,0 +1,241 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="1350" viewBox="0 0 900 1350" role="img" aria-label="NIGHT CLASS - 深夜の課外授業">
+  <defs>
+    <!-- Background Gradient -->
+    <linearGradient id="bgGrad" x1="0" y1="0" x2="0.8" y2="1">
+      <stop offset="0%" stop-color="#0c1226"/>
+      <stop offset="50%" stop-color="#04050a"/>
+      <stop offset="100%" stop-color="#020104"/>
+    </linearGradient>
+
+    <!-- Radial Glows -->
+    <radialGradient id="glowTop" cx="0.8" cy="0.15" r="0.6">
+      <stop offset="0%" stop-color="#60a5fa" stop-opacity="0.55"/>
+      <stop offset="50%" stop-color="#a78bfa" stop-opacity="0.15"/>
+      <stop offset="100%" stop-color="transparent" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glowCenter" cx="0.3" cy="0.5" r="0.7">
+      <stop offset="0%" stop-color="#a78bfa" stop-opacity="0.35"/>
+      <stop offset="60%" stop-color="#60a5fa" stop-opacity="0.08"/>
+      <stop offset="100%" stop-color="transparent" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glowBottom" cx="0.5" cy="0.9" r="0.5">
+      <stop offset="0%" stop-color="#d97706" stop-opacity="0.25"/>
+      <stop offset="100%" stop-color="transparent" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- Diagonal Beam -->
+    <linearGradient id="slashBeam" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#60a5fa" stop-opacity="0.8"/>
+      <stop offset="50%" stop-color="#a78bfa" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="transparent" stop-opacity="0"/>
+    </linearGradient>
+
+    <!-- Halftone Pattern -->
+    <pattern id="dots" x="0" y="0" width="16" height="16" patternUnits="userSpaceOnUse">
+      <circle cx="2" cy="2" r="1.2" fill="#60a5fa" opacity="0.18"/>
+    </pattern>
+
+    <!-- Diagonal Strip Pattern -->
+    <pattern id="stripes" width="20" height="20" patternTransform="rotate(45 0 0)" patternUnits="userSpaceOnUse">
+      <line x1="0" y1="0" x2="0" y2="20" stroke="#a78bfa" stroke-width="2" opacity="0.12"/>
+    </pattern>
+
+    <!-- Cyber Grid -->
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#60a5fa" stroke-width="0.8" opacity="0.08"/>
+    </pattern>
+
+    <!-- Bottom Vignette -->
+    <linearGradient id="bottomVignette" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#020104" stop-opacity="0"/>
+      <stop offset="45%" stop-color="#020104" stop-opacity="0.4"/>
+      <stop offset="80%" stop-color="#020104" stop-opacity="0.88"/>
+      <stop offset="100%" stop-color="#020104" stop-opacity="0.98"/>
+    </linearGradient>
+
+    <filter id="glowBlur" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="35"/>
+    </filter>
+    <filter id="softGlow">
+      <feGaussianBlur stdDeviation="8"/>
+    </filter>
+
+    <!-- Diagonal Clip Path for Multi-Panel Composition -->
+    <clipPath id="diagonalPanel1">
+      <polygon points="0,0 900,0 900,680 0,940"/>
+    </clipPath>
+    <clipPath id="diagonalPanel2">
+      <polygon points="0,960 900,700 900,1350 0,1350"/>
+    </clipPath>
+    <clipPath id="cornerSlice">
+      <polygon points="520,0 900,0 900,480 680,480"/>
+    </clipPath>
+  </defs>
+
+  <!-- Deep Base Background -->
+  <rect width="900" height="1350" fill="url(#bgGrad)"/>
+  <rect width="900" height="1350" fill="url(#dots)"/>
+  <rect width="900" height="1350" fill="url(#grid)"/>
+
+  <!-- Atmospheric Lighting -->
+  <rect width="900" height="1350" fill="url(#glowTop)"/>
+  <rect width="900" height="1350" fill="url(#glowCenter)"/>
+  <rect width="900" height="1350" fill="url(#glowBottom)"/>
+
+  <!-- Geometric Sci-fi / Fantasy Background Circles & Glyphs -->
+  <g transform="translate(620, 420)" stroke="#60a5fa" fill="none" opacity="0.25">
+    <circle r="320" stroke-width="1.2" stroke-dasharray="12,6"/>
+    <circle r="260" stroke-width="1"/>
+    <circle r="200" stroke-width="2" stroke-dasharray="4,8"/>
+    <circle r="120" stroke-width="1"/>
+    <polygon points="0,-180 156,90 -156,90" stroke-width="1.2" opacity="0.5"/>
+    <polygon points="0,180 156,-90 -156,-90" stroke-width="1.2" opacity="0.5"/>
+  </g>
+
+  <!-- Dynamic Diagonal Light Beams -->
+  <path d="M-100,1350 L520,-50 L640,-50 L20,1350 Z" fill="url(#slashBeam)" opacity="0.45"/>
+  <path d="M280,1350 L820,-50 L890,-50 L350,1350 Z" fill="url(#slashBeam)" opacity="0.25"/>
+
+  <!-- Main Anime Character Group -->
+  
+    <!-- Anime Character Silhouette & Face Group -->
+    <g transform="translate(450, 480) scale(-1.45, 1.45)" opacity="0.95">
+      <!-- Glow aura behind hair -->
+      <ellipse cx="0" cy="-60" rx="200" ry="240" fill="#60a5fa" opacity="0.18" filter="url(#glowBlur)"/>
+      
+      <!-- Back hair volume -->
+      <path d="M-140,-40 C-220,60 -190,260 -120,400 C-110,320 -100,240 -80,180 C-40,290 20,380 90,440 C80,310 90,220 130,160 C170,260 210,370 240,430 C200,250 210,60 140,-40 Z" 
+            fill="#a78bfa" opacity="0.45"/>
+
+      <!-- Body / Collar / Shoulders -->
+      <path d="M-130,220 C-110,180 -70,160 -40,150 L-30,130 L30,130 L40,150 C70,160 110,180 130,220 L160,380 L-160,380 Z" 
+            fill="#050308" stroke="#60a5fa" stroke-width="1.5" stroke-opacity="0.3"/>
+      
+      <!-- Neck -->
+      <path d="M-30,100 L-30,145 C-10,155 10,155 30,145 L30,100 Z" fill="#08050c"/>
+      <path d="M-18,125 C-5,135 5,135 18,125" fill="none" stroke="#60a5fa" stroke-width="1" opacity="0.4"/>
+
+      <!-- Jaw / Face contour -->
+      <path d="M-68,0 C-72,45 -55,95 0,122 C55,95 72,45 68,0 C65,-50 -65,-50 -68,0 Z" 
+            fill="#090610" stroke="#60a5fa" stroke-width="2" stroke-opacity="0.4"/>
+
+      <!-- Ear details -->
+      <path d="M-70,15 C-85,20 -82,50 -66,55" fill="none" stroke="#60a5fa" stroke-width="1.5" opacity="0.5"/>
+      <path d="M68,15 C85,20 82,50 66,55" fill="none" stroke="#60a5fa" stroke-width="1.5" opacity="0.5"/>
+
+      <!-- Anime Eyes - Stylized dramatic gaze -->
+      <!-- Left Eye -->
+      <g transform="translate(-34, 25)">
+        <path d="M-24,-4 C-10,-14 10,-12 18,-2 C16,4 4,8 -6,6 C-14,5 -20,2 -24,-4 Z" fill="#fff" opacity="0.9"/>
+        <!-- Iris -->
+        <ellipse cx="-2" cy="-2" rx="9" ry="11" fill="#93c5fd"/>
+        <ellipse cx="-2" cy="-2" rx="6" ry="8" fill="#030005"/>
+        <!-- Pupil shine / catchlights -->
+        <circle cx="-5" cy="-5" r="3" fill="#fff" opacity="0.95"/>
+        <circle cx="2" cy="1" r="1.5" fill="#fff" opacity="0.8"/>
+        <!-- Upper Eyelash line -->
+        <path d="M-28,-2 C-14,-17 12,-15 22,-2" fill="none" stroke="#60a5fa" stroke-width="3.5" stroke-linecap="round"/>
+        <path d="M-24,-1 C-12,-13 8,-12 18,-1" fill="none" stroke="#fff" stroke-width="1.2"/>
+        <!-- Double eyelid crease -->
+        <path d="M-18,-17 C-8,-23 6,-22 14,-15" fill="none" stroke="#a78bfa" stroke-width="1" opacity="0.7"/>
+        <!-- Eyelash wing -->
+        <path d="M19,-4 L27,-8" stroke="#60a5fa" stroke-width="2.5" stroke-linecap="round"/>
+      </g>
+
+      <!-- Right Eye -->
+      <g transform="translate(34, 25)">
+        <path d="M24,-4 C10,-14 -10,-12 -18,-2 C-16,4 -4,8 6,6 C14,5 20,2 24,-4 Z" fill="#fff" opacity="0.9"/>
+        <!-- Iris -->
+        <ellipse cx="2" cy="-2" rx="9" ry="11" fill="#93c5fd"/>
+        <ellipse cx="2" cy="-2" rx="6" ry="8" fill="#030005"/>
+        <!-- Pupil shine / catchlights -->
+        <circle cx="-1" cy="-5" r="3" fill="#fff" opacity="0.95"/>
+        <circle cx="5" cy="1" r="1.5" fill="#fff" opacity="0.8"/>
+        <!-- Upper Eyelash line -->
+        <path d="M28,-2 C14,-17 -12,-15 -22,-2" fill="none" stroke="#60a5fa" stroke-width="3.5" stroke-linecap="round"/>
+        <path d="M24,-1 C12,-13 -8,-12 -18,-1" fill="none" stroke="#fff" stroke-width="1.2"/>
+        <!-- Double eyelid crease -->
+        <path d="M18,-17 C8,-23 -6,-22 -14,-15" fill="none" stroke="#a78bfa" stroke-width="1" opacity="0.7"/>
+        <!-- Eyelash wing -->
+        <path d="M-19,-4 L-27,-8" stroke="#60a5fa" stroke-width="2.5" stroke-linecap="round"/>
+      </g>
+
+      <!-- Delicate Nose & Lips -->
+      <path d="M-2,55 L2,65 L-1,67" fill="none" stroke="#a78bfa" stroke-width="1.5" stroke-linecap="round" opacity="0.6"/>
+      <path d="M-12,88 C-4,86 4,86 12,88" fill="none" stroke="#60a5fa" stroke-width="2" stroke-linecap="round"/>
+      <path d="M-6,95 C-2,98 2,98 6,95" fill="none" stroke="#a78bfa" stroke-width="1.2" opacity="0.7"/>
+
+      <!-- Front Bangs / Hair Strands (Anime Framing) -->
+      <path d="M-85,-20 C-95,-120 0,-150 85,-20 C95,50 80,110 75,130 C65,70 60,30 50,-10 C40,40 35,90 25,120 C15,60 10,20 0,-20 C-10,30 -20,80 -35,125 C-45,65 -55,20 -65,-10 C-75,40 -80,90 -85,125 Z" 
+            fill="#060309" stroke="#60a5fa" stroke-width="1.5"/>
+      <!-- Glowing hair rim lines -->
+      <path d="M-80,-20 C-50,-130 50,-130 80,-20" fill="none" stroke="#60a5fa" stroke-width="2" opacity="0.8"/>
+      <path d="M-65,0 C-35,-100 35,-100 65,0" fill="none" stroke="#a78bfa" stroke-width="1.2" opacity="0.6"/>
+      <path d="M0,-120 L5,20" fill="none" stroke="#fff" stroke-width="0.8" opacity="0.3"/>
+      <path d="M-40,-80 L-30,40" fill="none" stroke="#60a5fa" stroke-width="1" opacity="0.5"/>
+      <path d="M40,-80 L30,40" fill="none" stroke="#a78bfa" stroke-width="1" opacity="0.5"/>
+
+      <!-- Cybernetic / Magical Headpiece / Visor Accent -->
+      
+    </g>
+  
+
+  
+
+  <!-- Manga Speed Lines / Cyber Streaks -->
+  <g stroke="#60a5fa" opacity="0.25" stroke-width="1">
+    <line x1="40" y1="120" x2="240" y2="120"/>
+    <line x1="40" y1="135" x2="160" y2="135"/>
+    <line x1="40" y1="150" x2="280" y2="150"/>
+    <line x1="720" y1="1100" x2="860" y2="1100"/>
+    <line x1="760" y1="1115" x2="860" y2="1115"/>
+  </g>
+
+  <!-- Large Japanese Kanji Watermark (Anime Release Style) -->
+  <text x="830" y="580" font-family="'Sora', sans-serif" font-size="96" font-weight="900" 
+        fill="#60a5fa" opacity="0.15" text-anchor="end" writing-mode="vertical-rl" letter-spacing="18">深夜の課外授業</text>
+
+  <!-- Dark Edge & Bottom Vignette for Poster Legibility -->
+  <rect width="900" height="1350" fill="url(#bottomVignette)"/>
+
+  <!-- Top Header Badges -->
+  <g transform="translate(48, 64)">
+    <!-- Brand Tag -->
+    <rect x="0" y="0" width="136" height="28" rx="6" fill="#090510" stroke="#60a5fa" stroke-width="1.2" opacity="0.85"/>
+    <circle cx="16" cy="14" r="4" fill="#60a5fa"/>
+    <text x="28" y="18" font-family="'Inter', sans-serif" font-size="11" font-weight="700" letter-spacing="2" fill="#ffffff">JERRYHUB</text>
+
+    <!-- Category Pill -->
+    <rect x="146" y="0" width="112" height="28" rx="6" fill="#131b38" stroke="#a78bfa" stroke-width="1" opacity="0.75"/>
+    <text x="202" y="18" font-family="'Inter', sans-serif" font-size="10" font-weight="800" letter-spacing="2" fill="#93c5fd" text-anchor="middle">COMICS</text>
+  </g>
+
+  <!-- 18+ Adults Only Cinematic Stamp (Top Right) -->
+  <g transform="translate(852, 64)" text-anchor="end">
+    <rect x="-70" y="0" width="70" height="28" rx="6" fill="#140205" stroke="#f43f5e" stroke-width="1.2" opacity="0.9"/>
+    <text x="-35" y="18" font-family="'Inter', sans-serif" font-size="11" font-weight="800" letter-spacing="2" fill="#f43f5e" text-anchor="middle">18+ R</text>
+  </g>
+
+  <!-- Futuristic Barcode & Archive Stamp in Bottom-Right Corner -->
+  <g transform="translate(852, 1260)" text-anchor="end" opacity="0.75">
+    <g fill="#93c5fd">
+      <rect x="-140" y="-30" width="4" height="24"/>
+      <rect x="-132" y="-30" width="8" height="24"/>
+      <rect x="-120" y="-30" width="2" height="24"/>
+      <rect x="-114" y="-30" width="6" height="24"/>
+      <rect x="-104" y="-30" width="10" height="24"/>
+      <rect x="-90" y="-30" width="4" height="24"/>
+      <rect x="-82" y="-30" width="12" height="24"/>
+      <rect x="-66" y="-30" width="6" height="24"/>
+      <rect x="-56" y="-30" width="3" height="24"/>
+      <rect x="-48" y="-30" width="8" height="24"/>
+      <rect x="-36" y="-30" width="4" height="24"/>
+      <rect x="-28" y="-30" width="14" height="24"/>
+      <rect x="-10" y="-30" width="4" height="24"/>
+    </g>
+    <text x="0" y="8" font-family="'Inter', sans-serif" font-size="8" letter-spacing="2" fill="rgba(255,255,255,0.5)">SET #018 · OFFICIAL RELEASE</text>
+  </g>
+
+  <!-- Holographic Border Edge Highlight -->
+  <rect x="2" y="2" width="896" height="1346" rx="14" fill="none" stroke="#60a5fa" stroke-width="1.5" stroke-opacity="0.35"/>
+</svg>

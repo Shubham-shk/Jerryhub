@@ -1,0 +1,13 @@
+project_id = "lewdiiis-hub"
+
+[functions.patreon-oauth]
+verify_jwt = false
+
+[functions.patreon-webhook]
+verify_jwt = false
+
+[functions.media-signed-url]
+# The function validates the caller's Supabase JWT itself, then re-checks the
+# Patreon entitlement before signing anything. This also lets CORS preflight
+# requests through without a JWT.
+verify_jwt = false

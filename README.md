@@ -25,7 +25,7 @@ Built with React + Vite + TypeScript, Supabase, and Patreon OAuth 2.0.
 - **Accessible upgrade path** — Basic members see an **Upgrade to Full Access — $9.50** prompt only when they open Full-only content.
 - **Custom player** — video player, image lightbox/gallery, embedded PDF viewer, and funscript download.
 - **Downloads for entitled members** — signed URLs minted on demand by an Edge Function after a fresh tier check.
-- **Account page** — Patreon status, verified access level, entitled tier IDs, pledge, last verification, manage/update links, and logout.
+- **Account page** — Patreon status, verified access level, entitled tier IDs, pledge, last verification, manage/update links, connect/disconnect/refresh Patreon account, and logout.
 - **Real-time membership updates** — Patreon webhooks update `profiles`; Supabase Realtime pushes the change into the UI.
 - **Admin dashboard** — create media sets, choose a homepage collection, set Public/Basic/Full access, upload thumbnails and premium files, recategorise sets, toggle trending/new, delete sets/files, view members and their verified tier IDs, change entitlements, review membership changes, and inspect the Patreon tier mapping.
 - **Demo Mode** — with no Supabase environment variables, the whole UI runs with local sample media and a demo member that can be switched between Basic, Full, and inactive.
@@ -82,6 +82,7 @@ This applies the migrations in order:
 1. `supabase/migrations/20261104000000_init.sql` — core schema and access control.
 2. `supabase/migrations/20261104010000_content_categories.sql` — adds `media_sets.category` (`animation`, `arts`, `games`, `comics`).
 3. `supabase/migrations/20261109000000_membership_tiers.sql` — adds `media_sets.access_level` (`public`, `basic`, `full`, default `full`) and the optional `membership_events` audit table.
+4. `supabase/migrations/20261110000000_patreon_connections.sql` — adds `patreon_connections` (server-owned OAuth tokens + verified membership snapshot) and `patreon_oauth_states` (single-use, hashed OAuth state), with RLS and column-level grants.
 
 The initial migration creates:
 
@@ -108,11 +109,14 @@ update public.media_sets set access_level = 'full' where slug = 'midnight-velvet
 In the [Patreon Clients & API Keys portal](https://www.patreon.com/portal/registration/register-clients):
 
 1. Create a **v2** client.
-2. Add this exact redirect URI:
+2. Register these redirect URIs (Patreon allows more than one):
 
    ```text
+   https://YOUR_PROJECT_REF.supabase.co/functions/v1/patreon-callback
    https://YOUR_PROJECT_REF.supabase.co/functions/v1/patreon-oauth?action=callback
    ```
+
+   The first URI is the account-connection callback and the recommended single callback for new deployments. The second is the legacy login callback. `patreon-callback` accepts both the database-backed connection state and the signed login state, so a Patreon app with only the first URI can serve both flows.
 
 3. Make sure the client can request these scopes:
 
@@ -122,7 +126,7 @@ In the [Patreon Clients & API Keys portal](https://www.patreon.com/portal/regist
    identity.memberships
    ```
 
-The Edge Function requests them during login. It only needs to read the signed-in user's identity and memberships.
+The Edge Function requests them during login and account connection. It only needs to read the signed-in user's identity and memberships.
 
 Find your **campaign id** and the **tier ids** for the $5 and $9.50 tiers with your creator access token:
 
@@ -150,17 +154,20 @@ The function verifies Patreon's `X-Patreon-Signature` (HMAC-MD5) before changing
 
 ```bash
 supabase secrets set \
-  APP_URL=https://your-domain.com \
+  APP_URL=https://jerryhub.store \
+  ALLOWED_ORIGINS=https://www.jerryhub.store \
   PATREON_CLIENT_ID=... \
   PATREON_CLIENT_SECRET=... \
   PATREON_CAMPAIGN_ID=... \
   PATREON_BASIC_TIER_ID=... \
   PATREON_FULL_TIER_ID=... \
   PATREON_REQUIRED_AMOUNT_CENTS=500 \
-  PATREON_REDIRECT_URI="https://YOUR_PROJECT_REF.supabase.co/functions/v1/patreon-oauth?action=callback" \
+  PATREON_REDIRECT_URI="https://YOUR_PROJECT_REF.supabase.co/functions/v1/patreon-callback" \
   PATREON_STATE_SECRET="$(openssl rand -hex 32)" \
   PATREON_WEBHOOK_SECRET=...
 ```
+
+`PATREON_CONNECT_REDIRECT_URI` and `PATREON_LOGIN_REDIRECT_URI` are optional overrides if you want the connection and login flows to use different callbacks. If they are omitted, both flows use `PATREON_REDIRECT_URI` when it points at `patreon-callback`, so a single registered URI is enough.
 
 `SUPABASE_URL`, `SUPABASE_ANON_KEY`, and `SUPABASE_SERVICE_ROLE_KEY` are injected automatically by Supabase's Edge runtime. Do not put the service role key in Vite or commit it.
 
@@ -176,9 +183,23 @@ supabase secrets set \
 
 ```bash
 supabase functions deploy patreon-oauth
+supabase functions deploy patreon-auth
+supabase functions deploy patreon-callback
+supabase functions deploy patreon-disconnect
+supabase functions deploy patreon-sync
 supabase functions deploy patreon-webhook
 supabase functions deploy media-signed-url
 ```
+
+| Function | Purpose |
+| --- | --- |
+| `patreon-oauth` | Existing Patreon **login** flow (`start` / `callback`). Unchanged behavior, now using the shared helpers. |
+| `patreon-auth` | Authenticated `POST` that creates a single-use OAuth state and returns the Patreon authorize URL. |
+| `patreon-callback` | Browser OAuth redirect target for **both** flows. Validates state, exchanges the code, verifies membership and links the account. |
+| `patreon-disconnect` | Authenticated `POST` that deletes stored tokens and clears membership access. |
+| `patreon-sync` | Authenticated `POST` that refreshes the token when needed and re-verifies membership. |
+| `patreon-webhook` | Patreon webhook receiver; updates both `profiles` and `patreon_connections`. |
+| `media-signed-url` | Re-checks entitlement and signs private files. |
 
 `supabase/config.toml` disables the platform JWT check for these functions because they either handle Patreon redirects/webhooks or verify the caller's JWT themselves. The signed-URL function still rejects missing/expired sessions and re-checks the member's verified access level before signing anything.
 
@@ -347,6 +368,16 @@ If you need to run functions locally, use `supabase functions serve` and point `
 - [ ] Calling `media-signed-url` as a Basic member for a Full-only set returns `403`.
 - [ ] A Patreon webhook cancellation changes the UI without a full reload.
 - [ ] A tier change updates the member's access level after verification.
+- [ ] Account page shows **Connect your Patreon account** when no connection exists.
+- [ ] Connect → Patreon authorize → callback returns to `/account?patreon=connected` and shows the verified account, status, access level, and connected date.
+- [ ] Cancelling on Patreon returns to `/account?patreon=error&reason=cancelled` with a clear message and no state change.
+- [ ] Reusing or tampering with the `state` value returns `invalid_state`.
+- [ ] Connecting a Patreon account already linked to another Jerryhub account returns `already_linked`.
+- [ ] Connecting a different Patreon account on the same Jerryhub account returns `different_account`.
+- [ ] **Refresh membership** re-verifies the tier and updates the account without a full reload.
+- [ ] Disconnecting asks for confirmation, removes the connection, clears membership access, and keeps the Jerryhub account (email, name, avatar, admin flag).
+- [ ] Revoked/expired Patreon tokens produce `reauth_required`, clear the connection, and prompt a reconnect.
+- [ ] The frontend never receives `access_token` or `refresh_token`; a direct `select *` on `patreon_connections` fails.
 - [ ] Admin can create a set, choose Public/Basic/Full, upload files, toggle flags, and delete files.
 - [ ] Admin can view Basic/Full members, their status, and associated Patreon tier IDs.
 - [ ] Admin can change a member's entitlement and review membership changes.
@@ -397,10 +428,15 @@ curl -i -X POST \
 │  ├─ migrations/
 │  │  ├─ 20261104000000_init.sql
 │  │  ├─ 20261104010000_content_categories.sql
-│  │  └─ 20261109000000_membership_tiers.sql
+│  │  ├─ 20261109000000_membership_tiers.sql
+│  │  └─ 20261110000000_patreon_connections.sql
 │  └─ functions/
-│     ├─ _shared/            # HTTP/CORS, Patreon API, profile sync, admin client
-│     ├─ patreon-oauth/
+│     ├─ _shared/            # HTTP/CORS, crypto, OAuth state, Patreon API, connections, profile sync, admin client
+│     ├─ patreon-oauth/      # Existing login flow
+│     ├─ patreon-auth/       # Start account connection
+│     ├─ patreon-callback/   # Unified OAuth callback
+│     ├─ patreon-disconnect/ # Remove connection
+│     ├─ patreon-sync/       # Refresh + re-verify membership
 │     ├─ patreon-webhook/
 │     └─ media-signed-url/
 ├─ .env.example
@@ -430,7 +466,8 @@ If the Supabase URL/key are absent, the app runs in Demo Mode.
 
 | Variable | Purpose |
 | --- | --- |
-| `APP_URL` | Exact frontend origin; used to validate OAuth return URLs |
+| `APP_URL` | Exact frontend origin; used for OAuth return URLs and CORS |
+| `ALLOWED_ORIGINS` | Optional comma-separated extra CORS origins (APP_URL and its www twin are automatic) |
 | `PATREON_CLIENT_ID` | Patreon OAuth client id |
 | `PATREON_CLIENT_SECRET` | Patreon OAuth client secret |
 | `PATREON_CAMPAIGN_ID` | Campaign id used for membership matching |
@@ -438,7 +475,9 @@ If the Supabase URL/key are absent, the app runs in Demo Mode.
 | `PATREON_FULL_TIER_ID` | Entitled tier id(s) mapped to Full Access |
 | `PATREON_TIER_ID` | Legacy single-tier fallback (Full Access) |
 | `PATREON_REQUIRED_AMOUNT_CENTS` | Final fallback minimum pledge when no tier ID is set |
-| `PATREON_REDIRECT_URI` | Exact registered OAuth callback URL |
+| `PATREON_REDIRECT_URI` | Exact registered OAuth callback URL (`.../patreon-callback` for new deployments) |
+| `PATREON_CONNECT_REDIRECT_URI` | Optional override for the account-connection callback |
+| `PATREON_LOGIN_REDIRECT_URI` | Optional override for the legacy login callback |
 | `PATREON_STATE_SECRET` | Long random secret for OAuth state HMACs (32+ chars) |
 | `PATREON_WEBHOOK_SECRET` | Patreon webhook signing secret |
 | `SUPABASE_URL` | Auto-injected |
@@ -454,8 +493,13 @@ If the Supabase URL/key are absent, the app runs in Demo Mode.
 - **Tier IDs, not prices.** Access is resolved from verified Patreon entitled tier IDs. Displayed prices, user input, frontend state, and payment amounts are never trusted.
 - **Previous tiers do not persist access.** Every request recalculates access from the current verified entitlement.
 - **Rotate secrets** if a client secret, state secret, or webhook secret is exposed.
-- **Patreon OAuth state** is signed with HMAC-SHA256 and expires after 15 minutes, preventing CSRF/open-redirect abuse.
+- **Patreon OAuth state** — the login flow uses an HMAC-SHA256 signed state that expires after 15 minutes. The account-connection flow uses a random, single-use state bound to the signed-in user in `patreon_oauth_states`; only its SHA-256 hash is stored, and it expires after 10 minutes. Both prevent CSRF and replay.
+- **Account linking is server-bound.** `patreon-auth` reads the user id from the caller's Supabase JWT and writes it to the state row. `patreon-callback` links the Patreon identity to that stored user id, never to a browser-supplied id, so the callback cannot be used to attach an attacker's Patreon account to someone else.
+- **Duplicate linking is rejected.** A Patreon user id or member id already linked to another Jerryhub account returns `already_linked`; reconnecting a different Patreon account on the same Jerryhub account returns `different_account`.
+- **Tokens stay server-side.** `patreon_connections.access_token` and `refresh_token` are not granted to `authenticated`; only the service role can read them. The browser reads an explicit safe column list, and `select *` is not permitted.
+- **Token refresh is server-side.** `patreon-sync` refreshes near-expiry tokens, retries once on `401`/`403`, and clears the connection with `reauth_required` when Patreon revokes access. Disconnecting deletes the stored tokens (Patreon has no public revocation endpoint).
 - **Return URLs** are restricted to the origin in `APP_URL`.
+- **CORS** is restricted to `APP_URL`, its www twin, and `ALLOWED_ORIGINS`. Local Vite ports are added only when `APP_URL` points at localhost. If no non-local origin is configured, the functions fall back to `*` to preserve legacy behavior.
 - **Webhook bodies** are verified against `X-Patreon-Signature` using the raw body bytes before parsing.
 - **Profile self-escalation** is blocked by `protect_profile_columns()`; only service-role/trusted sessions can change membership or admin flags.
 - **Signed URLs** are short-lived (one hour) and minted per request. The premium bucket has no direct client read policy.
@@ -468,10 +512,10 @@ If the Supabase URL/key are absent, the app runs in Demo Mode.
 
 ### “Patreon sign-in is temporarily unavailable”
 
-Check the `patreon-oauth` function logs. Common causes:
+Check the `patreon-oauth` / `patreon-callback` function logs. Common causes:
 
 - missing `APP_URL`, `PATREON_CLIENT_ID`, `PATREON_CLIENT_SECRET`, or `PATREON_STATE_SECRET`;
-- the redirect URI in Patreon does not exactly match `PATREON_REDIRECT_URI`;
+- the redirect URI in Patreon does not exactly match `PATREON_REDIRECT_URI` (or `PATREON_LOGIN_REDIRECT_URI`);
 - the OAuth client is not a v2 client or lacks the identity scopes.
 
 ### Login succeeds but the account stays locked
@@ -480,6 +524,23 @@ Check the `patreon-oauth` function logs. Common causes:
 - Confirm `PATREON_BASIC_TIER_ID` and `PATREON_FULL_TIER_ID` contain real tier IDs, not tier titles or amounts.
 - Check `profiles.membership_status`, `entitled_tier_ids`, and `pledge_amount_cents` in Supabase.
 - Remember the frontend also checks `VITE_PATREON_BASIC_TIER_ID` / `VITE_PATREON_FULL_TIER_ID`; they must contain the same tier IDs.
+
+### Account connection fails or returns to `/account?patreon=error`
+
+- `reason=invalid_state` — the state expired (10 minutes), was already used, or was tampered with. Start the connection again.
+- `reason=cancelled` — the user declined on Patreon. Nothing changed.
+- `reason=already_linked` — that Patreon user/member is linked to another Jerryhub account. Disconnect it there first.
+- `reason=different_account` — this Jerryhub account already has a different Patreon account. Disconnect before reconnecting.
+- `reason=connect_failed` — check `patreon-callback` logs. Common causes are a missing `PATREON_CLIENT_ID`/`PATREON_CLIENT_SECRET`, a redirect URI mismatch, or an unregistered `patreon-callback` URI.
+- `reason=server_error` — the function could not read the state table. Confirm the `20261110000000_patreon_connections.sql` migration was applied and `SUPABASE_SERVICE_ROLE_KEY` is available to the function.
+- Confirm `patreon-callback` is deployed and `PATREON_REDIRECT_URI` (or `PATREON_CONNECT_REDIRECT_URI`) exactly matches the URI registered in Patreon.
+- Confirm `APP_URL` is the real frontend origin; otherwise the callback redirects to the wrong place or CORS rejects the request.
+
+### `patreon-sync` returns `reauth_required`
+
+- Patreon rejected the stored access token and refresh failed. The connection was cleared intentionally; use **Connect Patreon** again.
+- If it happens immediately after connecting, confirm the Patreon client is a v2 client with `identity` and `identity.memberships` scopes.
+- Check that `PATREON_CAMPAIGN_ID` matches the campaign in the identity response.
 
 ### A Basic member can open Full-only content
 

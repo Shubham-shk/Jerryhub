@@ -3,7 +3,7 @@ import {
   preflight,
   safeMessage,
 } from "../_shared/http.ts";
-import { resolveAccessLevelFromMembership, tierIdsFromEnv, type AccessLevel } from "../_shared/patreon.ts";
+import { resolveAccessLevelFromMembership, tierIdsFromEnv, basicTierIdsFromEnv, fullTierIdsFromEnv, type AccessLevel } from "../_shared/patreon.ts";
 import { adminClient } from "../_shared/supabase.ts";
 
 const SIGNED_URL_TTL_SECONDS = 60 * 60;
@@ -33,20 +33,28 @@ Deno.serve(async (request) => {
   const options = preflight(request);
   if (options) return options;
 
+  // Pass the original request so the response echoes the caller's allowed
+  // origin (the apex and www origins are both accepted).
+  const respond = (
+    body: unknown,
+    status = 200,
+    extraHeaders: Record<string, string> = {},
+  ) => json(body, status, extraHeaders, request);
+
   if (request.method !== "POST") {
-    return json({ error: "Method not allowed." }, 405, { Allow: "POST, OPTIONS" });
+    return respond({ error: "Method not allowed." }, 405, { Allow: "POST, OPTIONS" });
   }
 
   const token = bearerToken(request);
   if (!token) {
-    return json({ error: "Please sign in with Patreon to continue." }, 401);
+    return respond({ error: "Please sign in with Patreon to continue." }, 401);
   }
 
   let body: { assetId?: unknown; assetIds?: unknown; download?: unknown };
   try {
     body = await request.json();
   } catch {
-    return json({ error: "Invalid request body." }, 400);
+    return respond({ error: "Invalid request body." }, 400);
   }
 
   const requested = Array.isArray(body.assetIds)
@@ -64,10 +72,10 @@ Deno.serve(async (request) => {
   ];
 
   if (assetIds.length === 0) {
-    return json({ error: "Choose a file to unlock." }, 400);
+    return respond({ error: "Choose a file to unlock." }, 400);
   }
   if (assetIds.length > MAX_BATCH) {
-    return json({ error: `You can unlock at most ${MAX_BATCH} files at once.` }, 400);
+    return respond({ error: `You can unlock at most ${MAX_BATCH} files at once.` }, 400);
   }
 
   try {
@@ -75,7 +83,7 @@ Deno.serve(async (request) => {
 
     const { data: userData, error: userError } = await admin.auth.getUser(token);
     if (userError || !userData.user) {
-      return json({ error: "Your session has expired. Please sign in again." }, 401);
+      return respond({ error: "Your session has expired. Please sign in again." }, 401);
     }
 
     const { data: profile, error: profileError } = await admin
@@ -88,7 +96,7 @@ Deno.serve(async (request) => {
 
     if (profileError) throw profileError;
     if (!profile) {
-      return json({ error: "Your membership could not be verified." }, 403);
+      return respond({ error: "Your membership could not be verified." }, 403);
     }
 
     // Admins need access for previews; everyone else must pass the same
@@ -96,7 +104,7 @@ Deno.serve(async (request) => {
     let userAccess: AccessLevel = "full";
     if (!profile.is_admin) {
       if (profile.membership_status !== "active") {
-        return json(
+        return respond(
           { error: "Your Patreon membership is inactive. Update your pledge to regain access." },
           403,
         );
@@ -104,10 +112,16 @@ Deno.serve(async (request) => {
 
       const campaignId = Deno.env.get("PATREON_CAMPAIGN_ID")?.trim() || "";
       if (campaignId && profile.patreon_campaign_id !== campaignId) {
-        return json({ error: "This Patreon membership is not for this campaign." }, 403);
+        return respond({ error: "This Patreon membership is not for this campaign." }, 403);
       }
 
-      const tiers = tierIdsFromEnv();
+      const tiers = [
+        ...new Set([
+          ...basicTierIdsFromEnv(),
+          ...fullTierIdsFromEnv(),
+          ...tierIdsFromEnv(),
+        ]),
+      ];
       const entitled = Array.isArray(profile.entitled_tier_ids)
         ? (profile.entitled_tier_ids as string[])
         : [];
@@ -121,9 +135,9 @@ Deno.serve(async (request) => {
 
       if (userAccess === "public") {
         if (tiers.length > 0) {
-          return json({ error: "Your pledge does not include a recognized membership tier." }, 403);
+          return respond({ error: "Your pledge does not include a recognized membership tier." }, 403);
         }
-        return json({ error: "Your pledge does not meet the required amount." }, 403);
+        return respond({ error: "Your pledge does not meet the required amount." }, 403);
       }
     }
 
@@ -135,7 +149,7 @@ Deno.serve(async (request) => {
 
     const assets = (assetRows ?? []) as AssetRow[];
     if (assets.length !== assetIds.length) {
-      return json({ error: "One or more files are unavailable." }, 404);
+      return respond({ error: "One or more files are unavailable." }, 404);
     }
 
     const setIds = [...new Set(assets.map((asset) => asset.set_id))];
@@ -158,16 +172,16 @@ Deno.serve(async (request) => {
     for (const asset of assets) {
       const set = setAccess.get(asset.set_id);
       if (!set?.published) {
-        return json({ error: "This media set is not published." }, 404);
+        return respond({ error: "This media set is not published." }, 404);
       }
       if (ACCESS_RANK[userAccess] < ACCESS_RANK[set.access]) {
         if (set.access === "full" && userAccess === "basic") {
-          return json(
+          return respond(
             { error: "This release is included with Full Access. Upgrade to unlock it." },
             403,
           );
         }
-        return json({ error: "Your membership does not include access to this release." }, 403);
+        return respond({ error: "Your membership does not include access to this release." }, 403);
       }
     }
 
@@ -182,7 +196,7 @@ Deno.serve(async (request) => {
         wantsDownload ? { download: asset.file_name } : undefined,
       );
       if (error || !data?.signedUrl) throw error ?? new Error("Could not sign the URL.");
-      return json({ url: data.signedUrl, expiresIn: SIGNED_URL_TTL_SECONDS });
+      return respond({ url: data.signedUrl, expiresIn: SIGNED_URL_TTL_SECONDS });
     }
 
     const { data: signedRows, error: signError } = await storage.createSignedUrls(
@@ -202,12 +216,12 @@ Deno.serve(async (request) => {
       .filter((item): item is { assetId: string; url: string } => Boolean(item));
 
     if (urls.length !== assets.length) {
-      return json({ error: "Some files could not be unlocked. Please try again." }, 500);
+      return respond({ error: "Some files could not be unlocked. Please try again." }, 500);
     }
 
-    return json({ urls, expiresIn: SIGNED_URL_TTL_SECONDS });
+    return respond({ urls, expiresIn: SIGNED_URL_TTL_SECONDS });
   } catch (error) {
     console.error("Signed URL error:", safeMessage(error));
-    return json({ error: "Could not unlock these files. Please try again." }, 500);
+    return respond({ error: "Could not unlock these files. Please try again." }, 500);
   }
 });

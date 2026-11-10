@@ -1,8 +1,18 @@
 import { optionalEnv, requiredEnv } from "./http.ts";
 
+export const PATREON_AUTHORIZE_URL = "https://www.patreon.com/oauth2/authorize";
 export const PATREON_TOKEN_URL = "https://www.patreon.com/api/oauth2/token";
 export const PATREON_IDENTITY_URL = "https://www.patreon.com/api/oauth2/v2/identity";
 export const PATREON_SCOPES = "identity identity[email] identity.memberships";
+
+export interface PatreonTokenSet {
+  accessToken: string;
+  refreshToken: string | null;
+  expiresIn: number;
+  refreshTokenExpiresIn: number;
+  scope: string | null;
+  tokenType: string;
+}
 
 export interface PatreonMembership {
   userId: string;
@@ -15,6 +25,19 @@ export interface PatreonMembership {
   tierIds: string[];
   amountCents: number;
   active: boolean;
+}
+
+/** Typed Patreon API failure so callers can distinguish revoked tokens (401/403). */
+export class PatreonApiError extends Error {
+  status: number;
+  code: string | null;
+
+  constructor(message: string, status: number, code: string | null = null) {
+    super(message);
+    this.name = "PatreonApiError";
+    this.status = status;
+    this.code = code;
+  }
 }
 
 interface JsonApiResource {
@@ -30,7 +53,7 @@ interface JsonApiResource {
 interface JsonApiResponse {
   data?: JsonApiResource;
   included?: JsonApiResource[];
-  errors?: Array<{ detail?: string; title?: string }>;
+  errors?: Array<{ detail?: string; title?: string; code?: string }>;
 }
 
 function asString(value: unknown): string | null {
@@ -125,8 +148,8 @@ export function resolveAccessLevelFromMembership(
 }
 
 export function requiredAmountCents(): number {
-  const value = Number(optionalEnv("PATREON_REQUIRED_AMOUNT_CENTS") || "700");
-  return Number.isFinite(value) && value >= 0 ? Math.round(value) : 700;
+  const value = Number(optionalEnv("PATREON_REQUIRED_AMOUNT_CENTS") || "500");
+  return Number.isFinite(value) && value >= 0 ? Math.round(value) : 500;
 }
 
 /**
@@ -140,10 +163,21 @@ export function isEntitled(
   return resolveAccessLevelFromMembership(membership) !== "public";
 }
 
+function tokenSetFromPayload(payload: Record<string, unknown>): PatreonTokenSet {
+  return {
+    accessToken: payload.access_token as string,
+    refreshToken: asString(payload.refresh_token),
+    expiresIn: asNumber(payload.expires_in),
+    refreshTokenExpiresIn: asNumber(payload.refresh_token_expires_in),
+    scope: asString(payload.scope),
+    tokenType: asString(payload.token_type) || "Bearer",
+  };
+}
+
 export async function exchangeCode(
   code: string,
   redirectUri: string,
-): Promise<{ accessToken: string; refreshToken: string | null; expiresIn: number }> {
+): Promise<PatreonTokenSet> {
   const body = new URLSearchParams({
     code,
     grant_type: "authorization_code",
@@ -164,14 +198,38 @@ export async function exchangeCode(
   const payload = (await response.json().catch(() => ({}))) as Record<string, unknown>;
   if (!response.ok || typeof payload.access_token !== "string") {
     const detail = asString(payload.error_description) || asString(payload.error) || "Token exchange failed";
-    throw new Error(detail);
+    throw new PatreonApiError(detail, response.status, asString(payload.error));
   }
 
-  return {
-    accessToken: payload.access_token,
-    refreshToken: asString(payload.refresh_token),
-    expiresIn: asNumber(payload.expires_in),
-  };
+  return tokenSetFromPayload(payload);
+}
+
+export async function refreshAccessToken(
+  refreshToken: string,
+): Promise<PatreonTokenSet> {
+  const body = new URLSearchParams({
+    grant_type: "refresh_token",
+    refresh_token: refreshToken,
+    client_id: requiredEnv("PATREON_CLIENT_ID"),
+    client_secret: requiredEnv("PATREON_CLIENT_SECRET"),
+  });
+
+  const response = await fetch(PATREON_TOKEN_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+      Accept: "application/json",
+    },
+    body,
+  });
+
+  const payload = (await response.json().catch(() => ({}))) as Record<string, unknown>;
+  if (!response.ok || typeof payload.access_token !== "string") {
+    const detail = asString(payload.error_description) || asString(payload.error) || "Token refresh failed";
+    throw new PatreonApiError(detail, response.status, asString(payload.error));
+  }
+
+  return tokenSetFromPayload(payload);
 }
 
 export async function fetchIdentity(accessToken: string): Promise<PatreonMembership> {
@@ -193,7 +251,7 @@ export async function fetchIdentity(accessToken: string): Promise<PatreonMembers
   const payload = (await response.json().catch(() => ({}))) as JsonApiResponse;
   if (!response.ok || !payload.data) {
     const detail = payload.errors?.[0]?.detail || payload.errors?.[0]?.title || "Could not read Patreon identity";
-    throw new Error(detail);
+    throw new PatreonApiError(detail, response.status, payload.errors?.[0]?.code ?? null);
   }
 
   const user = payload.data;
@@ -204,11 +262,16 @@ export async function fetchIdentity(accessToken: string): Promise<PatreonMembers
     ? members.filter((member) => relationshipId(member, "campaign") === campaignId)
     : members;
 
-  const member =
-    matchingMembers.find((item) => item.attributes?.patron_status === "active_patron") ??
-    matchingMembers[0] ??
-    members[0] ??
-    null;
+  // When a campaign id is configured, never fall back to a membership in a
+  // different campaign. A user can support multiple creators, and using another
+  // campaign's membership would store misleading status/tier data.
+  const member = campaignId
+    ? matchingMembers.find((item) => item.attributes?.patron_status === "active_patron") ??
+      matchingMembers[0] ??
+      null
+    : members.find((item) => item.attributes?.patron_status === "active_patron") ??
+      members[0] ??
+      null;
 
   const tierIds = member ? relationshipIds(member, "currently_entitled_tiers") : [];
   const patronStatus = asString(member?.attributes?.patron_status);

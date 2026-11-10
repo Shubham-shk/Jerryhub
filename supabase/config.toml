@@ -3,6 +3,22 @@ project_id = "lewdiiis-hub"
 [functions.patreon-oauth]
 verify_jwt = false
 
+[functions.patreon-auth]
+# Validates the caller's Supabase JWT itself so CORS preflight requests work.
+verify_jwt = false
+
+[functions.patreon-callback]
+# Browser OAuth redirect: no JWT is present on the request.
+verify_jwt = false
+
+[functions.patreon-disconnect]
+# Validates the caller's Supabase JWT itself.
+verify_jwt = false
+
+[functions.patreon-sync]
+# Validates the caller's Supabase JWT itself.
+verify_jwt = false
+
 [functions.patreon-webhook]
 verify_jwt = false
 

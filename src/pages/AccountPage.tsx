@@ -16,6 +16,7 @@ import {
   X,
 } from "lucide-react";
 import { MembershipBanner } from "../components/MembershipBanner";
+import { PatreonConnectionCard } from "../components/PatreonConnectionCard";
 import { StatusPill } from "../components/StatusPill";
 import { PatreonMark } from "../components/PatreonMark";
 import { useAgeGate } from "../context/AgeGateContext";
@@ -269,6 +270,8 @@ export function AccountPage() {
                     </button>
                   </div>
                 </div>
+
+                <PatreonConnectionCard />
 
                 <div className="account-secondary">
                   <div className="account-info-card">

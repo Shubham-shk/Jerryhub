@@ -20,6 +20,29 @@ export interface Profile {
   created_at?: string;
 }
 
+/**
+ * Safe, browser-visible view of a Patreon account connection.
+ * Token columns are never granted to authenticated clients.
+ */
+export interface PatreonConnection {
+  id: string;
+  user_id: string;
+  patreon_user_id: string;
+  patreon_member_id: string | null;
+  patreon_email: string | null;
+  patreon_full_name: string | null;
+  patreon_avatar_url: string | null;
+  scopes: string | null;
+  expires_at: string | null;
+  membership_status: MembershipStatus;
+  patron_status: string | null;
+  entitled_tier_ids: string[];
+  pledge_amount_cents: number;
+  patreon_campaign_id: string | null;
+  connected_at: string;
+  updated_at: string;
+}
+
 export interface MediaAsset {
   id: string;
   set_id: string;

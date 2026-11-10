@@ -66,6 +66,28 @@ async function findProfileId(
     if (data?.id) return data.id as string;
   }
 
+  // Fall back to the account-connection table. This covers users who linked
+  // Patreon from the account page but have no Patreon id on their profile yet.
+  if (values.userId) {
+    const { data, error } = await admin
+      .from("patreon_connections")
+      .select("user_id")
+      .eq("patreon_user_id", values.userId)
+      .maybeSingle();
+    if (error) throw error;
+    if (data?.user_id) return data.user_id as string;
+  }
+
+  if (values.memberId) {
+    const { data, error } = await admin
+      .from("patreon_connections")
+      .select("user_id")
+      .eq("patreon_member_id", values.memberId)
+      .maybeSingle();
+    if (error) throw error;
+    if (data?.user_id) return data.user_id as string;
+  }
+
   return null;
 }
 
@@ -142,6 +164,26 @@ Deno.serve(async (request) => {
 
     const { error } = await admin.from("profiles").update(update).eq("id", profileId);
     if (error) throw error;
+
+    // Keep the account-connection record in sync when one exists. A missing
+    // row must never block the webhook's primary profile update.
+    try {
+      const { error: connectionError } = await admin
+        .from("patreon_connections")
+        .update({
+          membership_status: membership.active ? "active" : "inactive",
+          patron_status: membership.patronStatus,
+          entitled_tier_ids: membership.tierIds,
+          pledge_amount_cents: membership.amountCents,
+          patreon_campaign_id: membership.campaignId,
+        })
+        .eq("user_id", profileId);
+      if (connectionError) {
+        console.warn("Could not update Patreon connection:", connectionError.message);
+      }
+    } catch (connectionError) {
+      console.warn("Could not update Patreon connection:", safeMessage(connectionError));
+    }
 
     // Append an audit row when the verified tier or status actually changed.
     // The table is optional; a missing table must never block membership sync.

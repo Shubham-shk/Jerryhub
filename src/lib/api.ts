@@ -2,7 +2,7 @@ import { DEMO_MODE, FUNCTION_BASE, SUPABASE_URL } from "./config";
 import { MOCK_SETS } from "../data/mockData";
 import { requireSupabase, supabase } from "./supabase";
 import { normalizeAccessLevel } from "./access";
-import type { MediaAsset, MediaSet, SignedAsset } from "./types";
+import type { AccessLevel, MediaAsset, MediaSet, PatreonConnection, SignedAsset } from "./types";
 
 const THUMBNAIL_BUCKET = "thumbnails";
 
@@ -169,6 +169,112 @@ export function patreonLoginUrl(returnTo = "/auth/callback"): string {
   const origin = window.location.origin;
   const redirect = `${origin}${returnTo}`;
   return `${FUNCTION_BASE}/patreon-oauth?action=start&returnTo=${encodeURIComponent(redirect)}`;
+}
+
+/* ----------------------------------------------------------------------------
+ * Patreon account connection
+ * ----------------------------------------------------------------------------
+ * Connection status is read through RLS with an explicit column list. Token
+ * columns are not granted to authenticated clients, so they are never exposed.
+ */
+
+const CONNECTION_COLUMNS = [
+  "id",
+  "user_id",
+  "patreon_user_id",
+  "patreon_member_id",
+  "patreon_email",
+  "patreon_full_name",
+  "patreon_avatar_url",
+  "scopes",
+  "expires_at",
+  "membership_status",
+  "patron_status",
+  "entitled_tier_ids",
+  "pledge_amount_cents",
+  "patreon_campaign_id",
+  "connected_at",
+  "updated_at",
+].join(", ");
+
+export class PatreonFunctionError extends Error {
+  code: string | null;
+
+  constructor(message: string, code: string | null = null) {
+    super(message);
+    this.name = "PatreonFunctionError";
+    this.code = code;
+  }
+}
+
+async function callPatreonFunction<T>(
+  name: string,
+  body: Record<string, unknown> = {},
+): Promise<T> {
+  if (!supabase) throw new Error("Supabase is not configured.");
+  const { data: sessionData } = await supabase.auth.getSession();
+  const token = sessionData.session?.access_token;
+  if (!token) throw new Error("Please sign in to continue.");
+
+  const response = await fetch(`${FUNCTION_BASE}/${name}`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(body),
+  });
+
+  const payload = (await response.json().catch(() => ({}))) as {
+    error?: string;
+    code?: string;
+  };
+
+  if (!response.ok) {
+    throw new PatreonFunctionError(
+      payload.error || "Patreon request failed. Please try again.",
+      payload.code ?? null,
+    );
+  }
+
+  return payload as T;
+}
+
+export async function fetchPatreonConnection(): Promise<PatreonConnection | null> {
+  if (DEMO_MODE) return null;
+  const client = requireSupabase();
+  const { data: userData } = await client.auth.getUser();
+  if (!userData.user) return null;
+
+  const { data, error } = await client
+    .from("patreon_connections")
+    .select(CONNECTION_COLUMNS)
+    .eq("user_id", userData.user.id)
+    .maybeSingle();
+
+  if (error) throw new Error(error.message);
+  return (data as PatreonConnection | null) ?? null;
+}
+
+/** Asks the backend for a Patreon authorize URL bound to this user's session. */
+export async function startPatreonConnect(returnTo = "/account"): Promise<string> {
+  const payload = await callPatreonFunction<{ url?: string }>("patreon-auth", { returnTo });
+  if (!payload.url) throw new Error("Patreon did not return an authorization URL.");
+  return payload.url;
+}
+
+export async function disconnectPatreon(): Promise<void> {
+  await callPatreonFunction<{ ok: boolean }>("patreon-disconnect");
+}
+
+export async function syncPatreonConnection(): Promise<{
+  connection: PatreonConnection;
+  accessLevel: AccessLevel;
+}> {
+  return callPatreonFunction<{
+    connection: PatreonConnection;
+    accessLevel: AccessLevel;
+  }>("patreon-sync");
 }
 
 export function formatDuration(seconds: number | null | undefined): string {

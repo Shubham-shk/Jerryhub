@@ -3,6 +3,8 @@
 interface ImportMetaEnv {
   readonly VITE_SUPABASE_URL?: string;
   readonly VITE_SUPABASE_ANON_KEY?: string;
+  readonly VITE_PATREON_BASIC_TIER_ID?: string;
+  readonly VITE_PATREON_FULL_TIER_ID?: string;
   readonly VITE_PATREON_TIER_ID?: string;
   readonly VITE_PATREON_PAGE_URL?: string;
   readonly VITE_ADMIN_EMAILS?: string;

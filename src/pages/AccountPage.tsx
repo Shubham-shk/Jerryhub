@@ -29,6 +29,7 @@ import {
   UPGRADE_CTA_LABEL,
 } from "../lib/config";
 import { accessLabel } from "../lib/access";
+import { POSTER_IMAGES } from "../data/posters";
 
 function formatDate(value: string | null | undefined): string {
   if (!value) return "—";
@@ -133,7 +134,7 @@ export function AccountPage() {
                 </Link>
               </div>
               <div className="account-guest-art" aria-hidden="true">
-                <img src="/posters/poster-04.svg" alt="" />
+                <img src={POSTER_IMAGES[3]} alt="" />
                 <span className="account-guest-badge"><ShieldCheck size={22} /></span>
               </div>
             </div>

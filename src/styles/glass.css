@@ -749,6 +749,15 @@ h1, h2, h3, h4, h5, h6 {
   object-fit: cover;
   object-position: 55% center;
 }
+.hero-marquee-panel::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(90deg, rgba(0, 0, 0, 0.5) 0%, rgba(0, 0, 0, 0.32) 35%, rgba(0, 0, 0, 0.08) 70%, rgba(0, 0, 0, 0) 100%),
+    linear-gradient(180deg, rgba(0, 0, 0, 0.15) 0%, transparent 25%, transparent 75%, rgba(0, 0, 0, 0.25) 100%);
+}
 @keyframes heroPosterDrift {
   from {
     transform: translate3d(0, 0, 0);
@@ -1335,14 +1344,19 @@ h1, h2, h3, h4, h5, h6 {
   pointer-events: none;
 }
 
-/* Dark Edge Scrim & Bottom Gradient */
+/* Cinematic Directional Scrim: ~50% black translucent on left, smoothly fading to 0% transparent on right */
 .poster-shade {
   position: absolute;
   inset: 0;
   pointer-events: none;
+  z-index: 2;
   background:
-    linear-gradient(180deg, rgba(4, 3, 8, 0.32) 0%, transparent 28%, transparent 48%, rgba(4, 3, 8, 0.92) 88%, #040308 100%),
-    linear-gradient(90deg, rgba(4, 3, 8, 0.4) 0%, transparent 35%);
+    linear-gradient(90deg, rgba(0, 0, 0, 0.5) 0%, rgba(0, 0, 0, 0.32) 35%, rgba(0, 0, 0, 0.08) 70%, rgba(0, 0, 0, 0) 100%),
+    linear-gradient(180deg, rgba(0, 0, 0, 0.15) 0%, transparent 25%, transparent 75%, rgba(0, 0, 0, 0.25) 100%);
+  transition: opacity 0.35s ease;
+}
+.poster-card:hover .poster-shade {
+  opacity: 0.85;
 }
 
 .poster-edge-highlight {
@@ -2306,6 +2320,16 @@ h1, h2, h3, h4, h5, h6 {
 .details-poster-frame[data-ratio="1:1.45"] {
   aspect-ratio: 1 / 1.45;
 }
+.details-poster-frame::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 2;
+  background:
+    linear-gradient(90deg, rgba(0, 0, 0, 0.5) 0%, rgba(0, 0, 0, 0.32) 35%, rgba(0, 0, 0, 0.08) 70%, rgba(0, 0, 0, 0) 100%),
+    linear-gradient(180deg, rgba(0, 0, 0, 0.15) 0%, transparent 25%, transparent 75%, rgba(0, 0, 0, 0.25) 100%);
+}
 .details-poster-image {
   width: 100%;
   height: 100%;
@@ -2331,6 +2355,7 @@ h1, h2, h3, h4, h5, h6 {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  z-index: 3;
 }
 .details-kanji-seal {
   padding: 3px 8px;
@@ -2364,6 +2389,7 @@ h1, h2, h3, h4, h5, h6 {
   border-radius: 50%;
   border: 2px solid rgba(255, 255, 255, 0.3);
   background: rgba(14, 11, 24, 0.6);
+  z-index: 3;
   color: #fff;
   cursor: pointer;
   display: grid;

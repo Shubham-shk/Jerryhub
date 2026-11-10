@@ -453,26 +453,18 @@ export function PlayerModal({ set, onClose }: { set: MediaSet | null; onClose: (
       label: string;
       sub: string;
       asset: MediaAsset;
-      count?: number;
     }> = [];
-    videos.forEach((asset) => {
-      items.push({ key: asset.id, type: "video", label: asset.file_name, sub: formatBytes(asset.size_bytes), asset });
+    videos.forEach((asset, index) => {
+      items.push({ key: asset.id, type: "video", label: `Vid ${index + 1}`, sub: formatBytes(asset.size_bytes), asset });
     });
-    if (images.length) {
-      items.push({
-        key: "gallery",
-        type: "image",
-        label: "Image gallery",
-        sub: `${images.length} ${images.length === 1 ? "image" : "images"}`,
-        asset: images[0],
-        count: images.length,
-      });
-    }
-    pdfs.forEach((asset) => {
-      items.push({ key: asset.id, type: "pdf", label: asset.file_name, sub: formatBytes(asset.size_bytes), asset });
+    images.forEach((asset, index) => {
+      items.push({ key: asset.id, type: "image", label: `Image ${index + 1}`, sub: formatBytes(asset.size_bytes), asset });
     });
-    funscripts.forEach((asset) => {
-      items.push({ key: asset.id, type: "funscript", label: asset.file_name, sub: formatBytes(asset.size_bytes), asset });
+    pdfs.forEach((asset, index) => {
+      items.push({ key: asset.id, type: "pdf", label: `PDF ${index + 1}`, sub: formatBytes(asset.size_bytes), asset });
+    });
+    funscripts.forEach((asset, index) => {
+      items.push({ key: asset.id, type: "funscript", label: `Script ${index + 1}`, sub: formatBytes(asset.size_bytes), asset });
     });
     return items;
   }, [videos, images, pdfs, funscripts]);
@@ -495,7 +487,6 @@ export function PlayerModal({ set, onClose }: { set: MediaSet | null; onClose: (
   const activeType = activeAsset?.type ?? set.primary_type;
   const activeUrl = activeAsset ? urls[activeAsset.id] : undefined;
   const stageLoading = loading || urlsLoading;
-  const imageIndex = activeAsset ? images.findIndex((image) => image.id === activeAsset.id) : -1;
 
   return (
     <div className="modal-backdrop player-backdrop" onMouseDown={onClose}>
@@ -657,21 +648,13 @@ export function PlayerModal({ set, onClose }: { set: MediaSet | null; onClose: (
             <div className="player-side-list">
               {sideItems.map((item) => {
                 const Icon = typeIcons[item.type];
-                const active =
-                  item.type === "image"
-                    ? imageIndex >= 0
-                    : activeAsset?.id === item.asset.id;
+                const active = activeAsset?.id === item.asset.id;
                 return (
                   <div key={item.key} className={`player-side-item${active ? " is-active" : ""}`}>
                     <button
                       type="button"
                       className="player-side-main"
-                      onClick={() => {
-                        setActiveId(item.asset.id);
-                        if (item.type === "image" && item.count && imageIndex < 0) {
-                          setActiveId(images[0]?.id ?? item.asset.id);
-                        }
-                      }}
+                      onClick={() => setActiveId(item.asset.id)}
                     >
                       <span className={`player-side-icon player-side-icon--${item.type}`}>
                         <Icon size={15} />
@@ -681,16 +664,14 @@ export function PlayerModal({ set, onClose }: { set: MediaSet | null; onClose: (
                         <span className="player-side-sub">{item.sub || typeLabels[item.type]}</span>
                       </span>
                     </button>
-                    {item.type !== "image" && (
-                      <button
-                        type="button"
-                        className="player-side-dl"
-                        aria-label={`Download ${item.label}`}
-                        onClick={() => void handleDownload(item.asset)}
-                      >
-                        {downloadingId === item.asset.id ? <Loader2 size={14} className="spin" /> : <Download size={14} />}
-                      </button>
-                    )}
+                    <button
+                      type="button"
+                      className="player-side-dl"
+                      aria-label={`Download ${item.label}`}
+                      onClick={() => void handleDownload(item.asset)}
+                    >
+                      {downloadingId === item.asset.id ? <Loader2 size={14} className="spin" /> : <Download size={14} />}
+                    </button>
                   </div>
                 );
               })}

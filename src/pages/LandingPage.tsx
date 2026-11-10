@@ -48,8 +48,8 @@ export function LandingPage() {
   // SECTION 3: Newest Uploads (ALL categories sorted newest first)
   const newestUploads = [...sets].sort(newestFirst).slice(0, 12);
 
-  // SECTION 4: NSFW Arts + Videos (Dedicated section for adult artwork galleries & video releases)
-  const nsfwArtsAndVideos = sets
+  // SECTION 4: Exclusive Arts + Videos (Dedicated section for artwork galleries & video releases)
+  const exclusiveArtsAndVideos = sets
     .filter((s) => s.category === "arts" || s.category === "animation")
     .sort(newestFirst);
 
@@ -175,18 +175,18 @@ export function LandingPage() {
       </section>
 
       {/* ============================================================
-          SECTION 4 — NSFW ARTS + VIDEOS (Immediately after Newest)
+          SECTION 4 — EXCLUSIVE ARTS + VIDEOS (Immediately after Newest)
           ============================================================ */}
       <section className="section library-section library-section--nsfw" id="nsfw-arts-videos">
         <div className="container">
           <Reveal>
             <SectionHeader
               eyebrow="Sensual galleries &amp; motion"
-              title="NSFW Arts + Videos"
-              description="Uncensored 2K video releases, high-DPI editorial pin-ups, bodypaint and ultraviolet motion art."
+              title="Exclusive Arts + Videos"
+              description="High-DPI editorial pin-ups, private 2K video releases and ultraviolet motion art."
               action={
                 <Link to="/newest?category=arts" className="link-arrow">
-                  <span>View all NSFW Art</span>
+                  <span>View all Art &amp; Videos</span>
                   <ArrowRight size={15} />
                 </Link>
               }
@@ -197,8 +197,8 @@ export function LandingPage() {
             {loading ? (
               <RowSkeleton count={5} />
             ) : (
-              <Carousel label="NSFW Arts + Videos">
-                {nsfwArtsAndVideos.map((set, index) => (
+              <Carousel label="Exclusive Arts + Videos">
+                {exclusiveArtsAndVideos.map((set, index) => (
                   <MediaCard
                     key={set.id}
                     set={set}
@@ -212,11 +212,11 @@ export function LandingPage() {
                 <UnlockMoreCard
                   category="arts"
                   count="+10,000"
-                  title="Unlock 10,000+ NSFW Artworks"
-                  subtitle="Uncensored 4K galleries, videos & sensual motion"
-                  badge="UNCENSORED"
+                  title="Unlock 10,000+ Exclusive Artworks"
+                  subtitle="Full 4K galleries, videos & sensual motion"
+                  badge="EXCLUSIVE"
                   variant="carousel"
-                  index={nsfwArtsAndVideos.length + 1}
+                  index={exclusiveArtsAndVideos.length + 1}
                 />
               </Carousel>
             )}

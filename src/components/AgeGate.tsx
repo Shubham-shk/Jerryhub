@@ -4,10 +4,9 @@ import { ArrowRight, LogOut, ShieldAlert } from "lucide-react";
 import { useAgeGate, detectRegion } from "../context/AgeGateContext";
 import { BRAND_NAME } from "../lib/config";
 import { Logo } from "./Logo";
+import { POSTER_IMAGES } from "../data/posters";
 
-const collage = [1, 2, 3, 4, 5, 6].map(
-  (n) => `/posters/portrait-${String(n).padStart(2, "0")}.svg`,
-);
+const collage = POSTER_IMAGES.slice(0, 6);
 
 export function AgeGate() {
   const { verified, accept } = useAgeGate();

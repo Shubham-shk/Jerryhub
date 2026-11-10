@@ -58,7 +58,7 @@ const typeOptions: Array<{ value: MediaType; label: string }> = [
 
 const categoryOptions: Array<{ value: MediaCategory; label: string }> = [
   { value: "animation", label: "Newest Uploads (animation)" },
-  { value: "arts", label: "NSFW Arts & Videos" },
+  { value: "arts", label: "Exclusive Arts & Videos" },
   { value: "games", label: "2D Games" },
   { value: "comics", label: "Manga + Comics" },
 ];

@@ -1,12 +1,34 @@
 import type { MediaCategory } from "../lib/types";
 
 /**
- * The single source of truth for the supplied hub poster artwork.
- *
- * Titles follow the names printed on the posters. Files live in
- * `public/posters/hub/opt` as compressed 640px JPEGs so the cards and the
- * homepage poster wall stay fast while still looking crisp at 2x.
+ * Single source of truth for the supplied poster artwork.
  */
+export const POSTER_IMAGES = [
+  "https://i.ibb.co/cX2Pr3GR/image-8.png",
+  "https://i.ibb.co/7d4c44Kf/image-9.png",
+  "https://i.ibb.co/cnyc1qH/image-10.png",
+  "https://i.ibb.co/20bGT8tK/image-11.png",
+  "https://i.ibb.co/3mmf4Pff/image-12.png",
+  "https://i.ibb.co/rD9WX9p/image-13.png",
+  "https://i.ibb.co/60jgGTfr/image-14.png",
+  "https://i.ibb.co/YJsy1K1/image-15.png",
+  "https://i.ibb.co/WWKvrL9D/poster1-1.png",
+  "https://i.ibb.co/bMv4tfPt/poster3.png",
+  "https://i.ibb.co/wF3KZVN3/POSTER4.png",
+  "https://i.ibb.co/jsqDskw/poster6.png",
+  "https://i.ibb.co/xK8kgmkS/POSTER8.png",
+  "https://i.ibb.co/C3Rk5WsC/poster9.png",
+  "https://i.ibb.co/4nDY3vQj/poster12.png",
+  "https://i.ibb.co/CpwzhzgM/poster15.png",
+  "https://i.ibb.co/8nMHvJzf/poster20.png",
+  "https://i.ibb.co/qLG9KD4n/poster21.png",
+] as const;
+
+/**
+ * Hashtags shown on every set across the catalogue and the hero slideshow.
+ */
+export const UNIVERSAL_SET_TAGS = ["NSFW sets", "images", "videos"];
+
 export interface HubPoster {
   id: string;
   file: string;
@@ -18,69 +40,67 @@ export interface HubPoster {
   tags: string[];
 }
 
-const poster = (n: number) => `/posters/hub/opt/p${String(n).padStart(2, "0")}.jpg`;
-
 export const HUB_POSTERS: HubPoster[] = [
   {
     id: "hub-p01",
-    file: poster(1),
-    title: "Stepmom Got Pregnant",
-    slug: "stepmom-got-pregnant",
+    file: POSTER_IMAGES[0],
+    title: "Got pregnant - Full Set",
+    slug: "got-pregnant-full-set",
     category: "animation",
-    genre: "Family Drama Animation",
+    genre: "Drama Animation",
     blurb:
-      "A slow-burn stepmom story with polished 2K art, deliberate pacing and a fully synchronized funscript.",
-    tags: ["StepMom", "FamilyDrama", "2KAnimation", "Funscript", "Uncensored"],
+      "A slow-burn story with polished 2K art, deliberate pacing and a fully synchronized interactive experience.",
+    tags: ["Drama", "2KAnimation", "Interactive", "Story"],
   },
   {
     id: "hub-p02",
-    file: poster(2),
-    title: "Stepmom and Daughter",
-    slug: "stepmom-and-daughter",
+    file: POSTER_IMAGES[1],
+    title: "Professor Secret OF Account",
+    slug: "professor-secret-of-account",
     category: "animation",
-    genre: "Family Drama Animation",
+    genre: "Drama Animation",
     blurb:
-      "Two generations, one impossible secret. A cinematic 2K animation with soft lighting and an immersive edit.",
-    tags: ["StepMom", "Daughter", "FamilyDrama", "2KAnimation", "Story"],
+      "A professor with a secret second life, a private account and one student who finds it. Polished 2K art with an immersive edit.",
+    tags: ["FamilyDrama", "2KAnimation", "Story", "Exclusive"],
   },
   {
     id: "hub-p03",
-    file: poster(3),
-    title: "Sophia Vacation",
-    slug: "sophia-vacation",
+    file: POSTER_IMAGES[2],
+    title: "Goth friend got some problems",
+    slug: "goth-friend-got-some-problems",
     category: "arts",
-    genre: "Vacation Editorial",
+    genre: "Moody Editorial",
     blurb:
-      "A sunlit vacation gallery with warm cinematic grading, exclusive stills and a high-DPI art-book finish.",
-    tags: ["Vacation", "ArtGallery", "HighDPI", "Editorial", "Summer"],
+      "A moody aesthetic gallery with warm cinematic grading, exclusive stills and a high-DPI art-book finish.",
+    tags: ["Goth", "ArtGallery", "HighDPI", "Editorial"],
   },
   {
     id: "hub-p04",
-    file: poster(4),
-    title: "NTR Gone Wrong",
-    slug: "ntr-gone-wrong",
+    file: POSTER_IMAGES[3],
+    title: "NTR gone wrong - full collection",
+    slug: "ntr-gone-wrong-full-collection",
     category: "animation",
     genre: "Drama Animation",
     blurb:
       "A tense relationship drama with sharp direction, expressive animation and a tightly timed interactive script.",
-    tags: ["Drama", "NTR", "2KAnimation", "Interactive", "Uncensored"],
+    tags: ["Drama", "NTR", "2KAnimation", "Interactive"],
   },
   {
     id: "hub-p05",
-    file: poster(5),
-    title: "Cassie Step-Sis",
-    slug: "cassie-step-sis",
+    file: POSTER_IMAGES[4],
+    title: "Momo Ayase pack - 1/2",
+    slug: "momo-ayase-pack-1-2",
     category: "animation",
-    genre: "Step-Sibling Animation",
+    genre: "Character Animation",
     blurb:
-      "A playful step-sister story with bright color, expressive motion and a 2K master built for late nights.",
-    tags: ["StepSis", "Animation", "2K", "Playful", "Uncensored"],
+      "A playful animated release with bright color, expressive motion and a 2K master built for late nights.",
+    tags: ["MomoAyase", "Animation", "2K", "Playful"],
   },
   {
     id: "hub-p06",
-    file: poster(6),
-    title: "Arrogant Bully",
-    slug: "arrogant-bully",
+    file: POSTER_IMAGES[5],
+    title: "Bully's NNN Challenge",
+    slug: "bullys-nnn-challenge",
     category: "comics",
     genre: "Campus Comic",
     blurb:
@@ -89,9 +109,9 @@ export const HUB_POSTERS: HubPoster[] = [
   },
   {
     id: "hub-p08",
-    file: poster(8),
-    title: "Mikasa",
-    slug: "mikasa",
+    file: POSTER_IMAGES[6],
+    title: "(50+ img ) Mikasa - Part 1 (exclusive)",
+    slug: "mikasa-part-1-exclusive",
     category: "arts",
     genre: "Character Art Gallery",
     blurb:
@@ -100,29 +120,29 @@ export const HUB_POSTERS: HubPoster[] = [
   },
   {
     id: "hub-p09",
-    file: poster(9),
-    title: "Student President",
-    slug: "student-president",
+    file: POSTER_IMAGES[7],
+    title: "Your New Employee - full collection",
+    slug: "your-new-employee-full-collection",
     category: "comics",
-    genre: "Campus Comic",
+    genre: "Workplace Comic",
     blurb:
-      "A student council story with confident characters, crisp panel work and a complete full-color chapter.",
-    tags: ["StudentCouncil", "Comic", "FullColor", "Campus", "Complete"],
+      "A workplace story with confident characters, crisp panel work and a complete full-color chapter.",
+    tags: ["Workplace", "Comic", "FullColor", "Campus", "Complete"],
   },
   {
     id: "hub-p10",
-    file: poster(10),
-    title: "Bath with Step-Sis",
-    slug: "bath-with-step-sis",
+    file: POSTER_IMAGES[8],
+    title: "Bath with Stepsis",
+    slug: "bath-with-stepsis",
     category: "arts",
     genre: "Bath Editorial",
     blurb:
-      "A soft-lit step-sister gallery with reflective water, warm skin tones and a polished editorial finish.",
+      "A soft-lit gallery with reflective water, warm skin tones and a polished editorial finish.",
     tags: ["StepSis", "Bath", "ArtGallery", "SoftLight", "HighDPI"],
   },
   {
     id: "hub-p11",
-    file: poster(11),
+    file: POSTER_IMAGES[9],
     title: "Aunt Marry",
     slug: "aunt-marry",
     category: "animation",
@@ -133,29 +153,29 @@ export const HUB_POSTERS: HubPoster[] = [
   },
   {
     id: "hub-p12",
-    file: poster(12),
-    title: "Stepmother Friends Special Version",
-    slug: "stepmother-friends-special-version",
+    file: POSTER_IMAGES[10],
+    title: "Tomboy Friend's Night Visit",
+    slug: "tomboy-friends-night-visit",
     category: "games",
     genre: "Choice Adventure / VN",
     blurb:
       "A special-edition visual novel where every route opens a new scene. Multiple endings, one very long night.",
-    tags: ["VisualNovel", "StepMom", "MultipleEndings", "SpecialEdition", "Playable"],
+    tags: ["VisualNovel", "Tomboy", "MultipleEndings", "SpecialEdition", "Playable"],
   },
   {
     id: "hub-p13",
-    file: poster(13),
-    title: "Bratty Step-Sis",
-    slug: "bratty-step-sis",
+    file: POSTER_IMAGES[11],
+    title: "Stepsis thinks she is chubby",
+    slug: "stepsis-thinks-she-is-chubby",
     category: "games",
     genre: "Step-Sibling Game",
     blurb:
-      "A playful step-sister game with expressive sprites, unlockable gallery scenes and multiple endings.",
+      "A playful game with expressive sprites, unlockable gallery scenes and multiple endings.",
     tags: ["StepSis", "2DGame", "Unlockables", "MultipleEndings", "Playable"],
   },
   {
     id: "hub-p14",
-    file: poster(14),
+    file: POSTER_IMAGES[12],
     title: "Sylphiette Greyrat",
     slug: "sylphiette-greyrat",
     category: "games",
@@ -163,6 +183,61 @@ export const HUB_POSTERS: HubPoster[] = [
     blurb:
       "A fantasy character route with hand-drawn scenes, companion dialogue and secret unlockable encounters.",
     tags: ["Fantasy", "Sylphiette", "2DRPG", "Companion", "SecretScenes"],
+  },
+  {
+    id: "hub-p15",
+    file: POSTER_IMAGES[13],
+    title: "Midnight Velvet - Deluxe",
+    slug: "midnight-velvet-deluxe",
+    category: "comics",
+    genre: "Workplace Comic",
+    blurb:
+      "A dark gothic serialized manga chapter formatted for the digital reader.",
+    tags: ["Manga", "Gothic", "Cyberpunk", "Story"],
+  },
+  {
+    id: "hub-p16",
+    file: POSTER_IMAGES[14],
+    title: "Neon Temptation - 2K Cut",
+    slug: "neon-temptation-2k-cut",
+    category: "animation",
+    genre: "2K Short Film",
+    blurb:
+      "A rain-soaked 2K animation with rich neon reflections and smooth pacing.",
+    tags: ["2KAnimation", "Cyberpunk", "Rain", "ShortFilm"],
+  },
+  {
+    id: "hub-p17",
+    file: POSTER_IMAGES[15],
+    title: "The Art of Seduction - Master",
+    slug: "the-art-of-seduction-master",
+    category: "arts",
+    genre: "Editorial Pin-Up",
+    blurb:
+      "An exclusive illustrated art set with editorial lighting and velvet textures.",
+    tags: ["ArtGallery", "HighRes", "Velvet", "Illustration"],
+  },
+  {
+    id: "hub-p18",
+    file: POSTER_IMAGES[16],
+    title: "Cyber Arcade Romance",
+    slug: "cyber-arcade-romance",
+    category: "games",
+    genre: "Choice Adventure / VN",
+    blurb:
+      "A neon arcade visual novel with multiple routes and secret bonus encounters.",
+    tags: ["VisualNovel", "Arcade", "MultipleEndings", "Playable"],
+  },
+  {
+    id: "hub-p19",
+    file: POSTER_IMAGES[17],
+    title: "Crimson Letters - Reading Room",
+    slug: "crimson-letters-reading-room",
+    category: "comics",
+    genre: "Campus Comic",
+    blurb:
+      "A slow-burn story told through illustrated pages in the reading room.",
+    tags: ["Campus", "Manga", "DigitalManga", "Complete"],
   },
 ];
 

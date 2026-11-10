@@ -1,16 +1,12 @@
 import type { MediaSet } from "../lib/types";
-import { HUB_POSTERS } from "./posters";
+import { HUB_POSTERS, POSTER_IMAGES, UNIVERSAL_SET_TAGS } from "./posters";
 
 const SAMPLE_VIDEO = "/demo/midnight-velvet.mp4";
 const SAMPLE_VIDEO_2 = "/demo/neon-temptation.mp4";
 const SAMPLE_VIDEO_3 = "/demo/after-hours.mp4";
 
-const HUB_GALLERY = [1, 2, 3, 4, 5, 6, 8, 9, 10, 11, 12, 13, 14];
-const img = (n: number) => {
-  const posterNumber = HUB_GALLERY[(n - 1) % HUB_GALLERY.length];
-  return `/posters/hub/opt/p${String(posterNumber).padStart(2, "0")}.jpg`;
-};
-const portrait = (n: number) => `/posters/portrait-${String(n).padStart(2, "0")}.svg`;
+const img = (n: number) => POSTER_IMAGES[(n - 1) % POSTER_IMAGES.length];
+const portrait = (n: number) => POSTER_IMAGES[(n - 1) % POSTER_IMAGES.length];
 
 const demoVideo = (id: string, url: string, name: string) => ({
   id,
@@ -87,7 +83,7 @@ const BASE_SETS: Array<Omit<MediaSet, "access_level">> = [
     author: "Jerryhub Studio",
     views: 184500,
     tags: ["Interactive", "CockHero", "2K", "Funscript", "Cyberpunk", "Synthwave"],
-    banner_image: "/banners/banner-01.svg",
+    banner_image: portrait(1),
     aspect_ratio: "2:3",
     demo_assets: [
       demoVideo("mv-video", SAMPLE_VIDEO, "midnight-velvet.mp4"),
@@ -116,7 +112,7 @@ const BASE_SETS: Array<Omit<MediaSet, "access_level">> = [
     author: "Kurogane Studios",
     views: 142000,
     tags: ["2KAnimation", "Cyberpunk", "Rain", "ShortFilm", "60FPS"],
-    banner_image: "/banners/banner-02.svg",
+    banner_image: portrait(2),
     aspect_ratio: "2:3",
     demo_assets: [demoVideo("nt-video", SAMPLE_VIDEO_2, "neon-temptation.mp4")],
   },
@@ -141,7 +137,7 @@ const BASE_SETS: Array<Omit<MediaSet, "access_level">> = [
     author: "VelvetWorks",
     views: 95400,
     tags: ["ArtGallery", "HighRes", "Velvet", "Sensual", "Illustration"],
-    banner_image: "/banners/banner-03.svg",
+    banner_image: portrait(3),
     aspect_ratio: "2:3",
     demo_assets: demoImages("aos", [3, 6, 8, 9, 10, 5]),
   },
@@ -166,7 +162,7 @@ const BASE_SETS: Array<Omit<MediaSet, "access_level">> = [
     author: "CrimsonInk",
     views: 88200,
     tags: ["Manga", "Gothic", "DarkFantasy", "PDFReader", "Story"],
-    banner_image: "/banners/banner-04.svg",
+    banner_image: portrait(4),
     aspect_ratio: "1:1.45",
     demo_assets: [demoPdf("cl-pdf")],
   },
@@ -191,7 +187,7 @@ const BASE_SETS: Array<Omit<MediaSet, "access_level">> = [
     author: "Jerryhub Studio",
     views: 215000,
     tags: ["Series", "Vol1", "Interactive", "Haptic", "Synthwave"],
-    banner_image: "/banners/banner-05.svg",
+    banner_image: portrait(5),
     aspect_ratio: "2:3",
     demo_assets: [
       demoVideo("ah-video", SAMPLE_VIDEO_3, "after-hours-vol-1.mp4"),
@@ -218,7 +214,7 @@ const BASE_SETS: Array<Omit<MediaSet, "access_level">> = [
     author: "PixelMimi",
     views: 74200,
     tags: ["Glitch", "AnimePop", "MusicVideo", "AlternativeCut"],
-    banner_image: "/banners/banner-06.svg",
+    banner_image: portrait(6),
     aspect_ratio: "2:3",
     demo_assets: [
       demoVideo("ss-video", "/demo/sugar-and-static.mp4", "sugar-and-static.mp4"),
@@ -319,7 +315,7 @@ const BASE_SETS: Array<Omit<MediaSet, "access_level">> = [
     author: "Jerryhub Studio",
     views: 168000,
     tags: ["GoldenHour", "WarmLighting", "2K", "Remastered", "60FPS"],
-    banner_image: "/banners/banner-06.svg",
+    banner_image: portrait(6),
     aspect_ratio: "2:3",
     demo_assets: [demoVideo("gh-video", "/demo/golden-hour.mp4", "golden-hour.mp4")],
   },
@@ -344,7 +340,7 @@ const BASE_SETS: Array<Omit<MediaSet, "access_level">> = [
     author: "NeonBit Games",
     views: 132000,
     tags: ["2DGame", "ChoicesMatter", "MultipleEndings", "Arcade", "Interactive"],
-    banner_image: "/banners/banner-03.svg",
+    banner_image: portrait(3),
     aspect_ratio: "3:4",
     demo_assets: [
       demoVideo("va-video", SAMPLE_VIDEO_3, "velvet-arcade.mp4"),
@@ -396,7 +392,7 @@ const BASE_SETS: Array<Omit<MediaSet, "access_level">> = [
     author: "Aegis Realm",
     views: 114000,
     tags: ["2DRPG", "Fantasy", "TurnBased", "HandDrawn", "SecretScenes"],
-    banner_image: "/banners/banner-05.svg",
+    banner_image: portrait(5),
     aspect_ratio: "3:4",
     demo_assets: [
       demoVideo("mq-video", SAMPLE_VIDEO, "midnight-quest.mp4"),
@@ -710,7 +706,7 @@ export const MOCK_SETS: MediaSet[] = HUB_POSTERS.map((poster, index) => {
     banner_image: poster.file,
     aspect_ratio: "a4",
     genre: poster.genre,
-    tags: poster.tags,
+    tags: [...UNIVERSAL_SET_TAGS, ...poster.tags],
     sort_order: index + 1,
     access_level,
   };

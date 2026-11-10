@@ -24,6 +24,7 @@ import { useMediaSets } from "../hooks/useMediaSets";
 import { useOpenMedia } from "../hooks/useOpenMedia";
 import { accessLabel } from "../lib/access";
 import { BASIC_PRICE_LABEL, FULL_PRICE_LABEL, PATREON_PAGE_URL, UPGRADE_CTA_LABEL } from "../lib/config";
+import { POSTER_IMAGES } from "../data/posters";
 
 type CategoryFilter = "all" | "animation" | "video" | "arts" | "games" | "manga" | "comics";
 type SortOption = "newest" | "trending" | "duration" | "title";
@@ -59,7 +60,7 @@ const categoryInfo: Record<CategoryFilter, CategoryMetaItem> = {
     aspectRatio: "2:3",
   },
   arts: {
-    title: "NSFW Arts & Galleries",
+    title: "Exclusive Arts & Galleries",
     blurb: "Sensual editorial galleries, glitch loops, bioluminescent stills and 4K character portraits.",
     kanji: "官能画集",
     icon: ImageIcon,
@@ -182,7 +183,7 @@ export function BrowsePage({ mode }: { mode?: "trending" | "newest" | "all" }) {
       {/* Hero Header for Browse / Content Discovery */}
       <section className="library-hero browse-hero">
         <div className="library-hero-bg" aria-hidden="true">
-          <img src={isTrendingMode ? "/banners/banner-01.svg" : "/banners/banner-02.svg"} alt="" />
+          <img src={isTrendingMode ? POSTER_IMAGES[8] : POSTER_IMAGES[9]} alt="" />
           <div className="browse-hero-ambient" />
         </div>
 

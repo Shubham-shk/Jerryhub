@@ -14,6 +14,7 @@ import {
 import { useAuth } from "../../context/AuthContext";
 import { BASIC_PRICE_LABEL } from "../../lib/config";
 import { PosterMarquee } from "./PosterMarquee";
+import { POSTER_IMAGES, UNIVERSAL_SET_TAGS } from "../../data/posters";
 
 export interface HeroSlide {
   id: string;
@@ -34,116 +35,115 @@ export interface HeroSlide {
 
 export const HERO_SLIDES: HeroSlide[] = [
   {
-    id: "stepmom-got-pregnant",
-    slug: "stepmom-got-pregnant",
+    id: "got-pregnant-full-set",
+    slug: "got-pregnant-full-set",
     eyebrow: "Featured Tonight · 2K Master",
-    kanji: "継母の秘密",
-    title: "STEPMOM GOT",
-    accentTitle: "PREGNANT.",
+    kanji: "秘密",
+    title: "GOT PREGNANT",
+    accentTitle: "FULL SET.",
     category: "animation",
     categoryLabel: "2K Animation",
     description:
-      "A slow-burn family drama animation with polished 2K art, deliberate pacing and a fully synchronized funscript.",
+      "A slow-burn story with polished 2K art, deliberate pacing and a synchronized audio experience.",
     meta: "24 min · 2K Ultra · Interactive",
-    rating: "18+ Uncensored",
-    portraitPoster: "/posters/hub/opt/p01.jpg",
+    rating: "18+ Exclusive",
+    portraitPoster: POSTER_IMAGES[0],
     glowColor: "rgba(255, 45, 120, 0.42)",
-    tags: ["StepMom", "2KAnimation", "Funscript", "Uncensored"],
+    tags: ["2KAnimation", "Interactive", "Drama"],
   },
   {
-    id: "stepmom-and-daughter",
-    slug: "stepmom-and-daughter",
-    eyebrow: "New Family Drama · 2K Master",
-    kanji: "母と娘",
-    title: "STEPMOM AND",
-    accentTitle: "DAUGHTER.",
+    id: "professor-secret-of-account",
+    slug: "professor-secret-of-account",
+    eyebrow: "New Drama · 2K Master",
+    kanji: "秘密の口座",
+    title: "PROFESSOR SECRET",
+    accentTitle: "OF ACCOUNT.",
     category: "animation",
     categoryLabel: "2K Feature",
     description:
-      "Two generations, one impossible secret. A cinematic 2K animation with soft lighting and an immersive edit.",
+      "A professor with a secret second life, a private account and one student who finds it. Polished 2K art with an immersive edit.",
     meta: "21 min · 2K Ultra · Story",
-    rating: "18+ Uncensored",
-    portraitPoster: "/posters/hub/opt/p02.jpg",
+    rating: "18+ Exclusive",
+    portraitPoster: POSTER_IMAGES[1],
     glowColor: "rgba(168, 85, 247, 0.42)",
-    tags: ["FamilyDrama", "2KAnimation", "Story", "Uncensored"],
+    tags: ["FamilyDrama", "2KAnimation", "Story"],
   },
   {
-    id: "stepmother-friends-special-version",
-    slug: "stepmother-friends-special-version",
+    id: "tomboy-friends-night-visit",
+    slug: "tomboy-friends-night-visit",
     eyebrow: "Playable Visual Novel · Special Edition",
     kanji: "特別版",
-    title: "STEPMOTHER",
-    accentTitle: "FRIENDS.",
+    title: "TOMBOY FRIEND'S",
+    accentTitle: "NIGHT VISIT.",
     category: "games",
     categoryLabel: "Visual Novel",
     description:
       "A special-edition visual novel where every route opens a new scene. Multiple endings, one very long night.",
     meta: "2D Game · 4 Routes · Special Edition",
     rating: "18+ Explicit",
-    portraitPoster: "/posters/hub/opt/p12.jpg",
+    portraitPoster: POSTER_IMAGES[10],
     glowColor: "rgba(6, 182, 212, 0.42)",
-    tags: ["VisualNovel", "MultipleEndings", "Playable", "Uncensored"],
+    tags: ["VisualNovel", "MultipleEndings", "Playable"],
   },
   {
-    id: "student-president",
-    slug: "student-president",
+    id: "bullys-nnn-challenge",
+    slug: "bullys-nnn-challenge",
     eyebrow: "From The Reading Room · Complete",
-    kanji: "生徒会長",
-    title: "STUDENT",
-    accentTitle: "PRESIDENT.",
+    kanji: "挑戦",
+    title: "BULLY'S NNN",
+    accentTitle: "CHALLENGE.",
     category: "comics",
     categoryLabel: "Manga & Comic",
     description:
-      "A student council story with confident characters, crisp panel work and a complete full-color chapter.",
+      "A campus rivalry story with confident characters, crisp panel work and a complete full-color chapter.",
     meta: "3 Chapters · Illustrated · PDF Reader",
-    rating: "18+ Adults Only",
-    portraitPoster: "/posters/hub/opt/p09.jpg",
+    rating: "18+ Exclusive",
+    portraitPoster: POSTER_IMAGES[5],
     glowColor: "rgba(139, 92, 246, 0.42)",
     tags: ["Manga", "Campus", "FullColor", "Complete"],
   },
   {
-    id: "bratty-step-sis",
-    slug: "bratty-step-sis",
+    id: "stepsis-thinks-she-is-chubby",
+    slug: "stepsis-thinks-she-is-chubby",
     eyebrow: "Playable 2D Game · All Routes",
     kanji: "生意気な妹",
-    title: "BRATTY",
-    accentTitle: "STEP-SIS.",
+    title: "STEPSIS THINKS SHE",
+    accentTitle: "IS CHUBBY.",
     category: "games",
     categoryLabel: "2D Game",
     description:
-      "A playful step-sister game with expressive sprites, unlockable gallery scenes and multiple endings.",
+      "A playful story with expressive sprites, unlockable gallery scenes and multiple endings.",
     meta: "2D Game · Unlockables · v1.2",
     rating: "18+ Explicit",
-    portraitPoster: "/posters/hub/opt/p13.jpg",
+    portraitPoster: POSTER_IMAGES[11],
     glowColor: "rgba(245, 158, 11, 0.4)",
     tags: ["2DGame", "StepSis", "Unlockables", "Playable"],
   },
   {
-    id: "sophia-vacation",
-    slug: "sophia-vacation",
+    id: "goth-friend-got-some-problems",
+    slug: "goth-friend-got-some-problems",
     eyebrow: "Vault Gallery · High-DPI Stills",
-    kanji: "夏の休暇",
-    title: "SOPHIA",
-    accentTitle: "VACATION.",
+    kanji: "黒髪",
+    title: "GOTH FRIEND GOT",
+    accentTitle: "SOME PROBLEMS.",
     category: "arts",
     categoryLabel: "Art Gallery",
     description:
-      "A sunlit vacation gallery with warm cinematic grading, exclusive stills and a high-DPI art-book finish.",
+      "A dark aesthetic gallery with moody cinematic grading, exclusive stills and a high-DPI art-book finish.",
     meta: "48 Stills · High-DPI · 4K",
     rating: "18+ Explicit",
-    portraitPoster: "/posters/hub/opt/p03.jpg",
+    portraitPoster: POSTER_IMAGES[2],
     glowColor: "rgba(20, 184, 166, 0.4)",
-    tags: ["Vacation", "ArtGallery", "HighDPI", "Editorial"],
+    tags: ["Goth", "ArtGallery", "HighDPI", "Editorial"],
   },
 ];
 
 /* One-line proof points shown on the right of the hero. */
 export const HERO_STATS = [
-  { lead: "10,000+", text: "NSFW pics" },
+  { lead: "10,000+", text: "NSFW sets" },
   { lead: "Fully", text: "uncensored" },
   { lead: "NSFW", text: "videos & animations" },
   { lead: "2D", text: "games" },
-  { lead: "Uncensored", text: "content" },
 ];
 export function HeroSlideshow() {
   const { isPatron } = useAuth();
@@ -253,7 +253,7 @@ export function HeroSlideshow() {
               </div>
               <span className="hero-spec-dot" />
               <div className="hero-tags-group">
-                {slide.tags.slice(0, 3).map((t) => (
+                {UNIVERSAL_SET_TAGS.map((t) => (
                   <span key={t} className="hero-tag-pill">
                     #{t}
                   </span>
@@ -304,7 +304,7 @@ export function HeroSlideshow() {
             </p>
           </div>
 
-          {/* Library stat rail — replaces the floating artwork container */}
+          {/* Library stat rail — proof points */}
           <aside className="hero-stat-rail" aria-label="Library at a glance">
             <p className="hero-stat-rail-title">Inside the vault</p>
             <ul className="hero-stat-list">

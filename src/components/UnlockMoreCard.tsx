@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { BASIC_PRICE_LABEL } from "../lib/config";
 import { useReveal } from "../hooks/useReveal";
+import { POSTER_IMAGES } from "../data/posters";
 
 interface UnlockMoreCardProps {
   title?: string;
@@ -17,12 +18,12 @@ interface UnlockMoreCardProps {
 }
 
 const categoryArtworks: Record<string, string> = {
-  trending: "/posters/hub/opt/p04.jpg",
-  newest: "/posters/hub/opt/p05.jpg",
-  arts: "/posters/hub/opt/p06.jpg",
-  games: "/posters/hub/opt/p14.jpg",
-  comics: "/posters/hub/opt/p10.jpg",
-  all: "/posters/hub/opt/p08.jpg",
+  trending: POSTER_IMAGES[3],
+  newest: POSTER_IMAGES[4],
+  arts: POSTER_IMAGES[2],
+  games: POSTER_IMAGES[12],
+  comics: POSTER_IMAGES[5],
+  all: POSTER_IMAGES[6],
 };
 
 export function UnlockMoreCard({
@@ -39,7 +40,7 @@ export function UnlockMoreCard({
   const navigate = useNavigate();
   const { ref, revealed } = useReveal<HTMLElement>();
 
-  const bgImg = categoryArtworks[category] || "/posters/hub/opt/p01.jpg";
+  const bgImg = categoryArtworks[category] || POSTER_IMAGES[0];
 
   const defaultTitles: Record<string, { title: string; sub: string }> = {
     trending: {
@@ -51,8 +52,8 @@ export function UnlockMoreCard({
       sub: "Daily uncensored drops added to private library",
     },
     arts: {
-      title: "Unlock 10,000+ NSFW Artworks",
-      sub: "Uncensored 4K galleries, videos & sensual motion",
+      title: "Unlock 10,000+ Exclusive Artworks",
+      sub: "Full 4K galleries, videos & sensual motion",
     },
     games: {
       title: "Unlock 40+ Playable 2D Games",

@@ -1,18 +1,19 @@
 import { ArrowRight, Flame, Play, Sparkles, Star } from "lucide-react";
 import { BASIC_PRICE_LABEL } from "../../lib/config";
+import { POSTER_IMAGES } from "../../data/posters";
 
 const heroCards = [
-  { src: "/posters/poster-01.svg", title: "Midnight Velvet", tag: "Interactive", meta: "18 min · 2K" },
-  { src: "/posters/poster-05.svg", title: "After Hours", tag: "Trending", meta: "21 min · 2K" },
-  { src: "/posters/poster-10.svg", title: "Golden Hour", tag: "New", meta: "12 min · 2K" },
+  { src: POSTER_IMAGES[8], title: "Midnight Velvet", tag: "Interactive", meta: "18 min · 2K" },
+  { src: POSTER_IMAGES[9], title: "After Hours", tag: "Trending", meta: "21 min · 2K" },
+  { src: POSTER_IMAGES[10], title: "Golden Hour", tag: "New", meta: "12 min · 2K" },
 ];
 
 export function Hero() {
   return (
     <section className="hero">
       <div className="hero-bg" aria-hidden="true">
-        {[2, 4, 7, 9].map((n) => (
-          <img key={n} src={`/posters/poster-${String(n).padStart(2, "0")}.svg`} alt="" />
+        {[POSTER_IMAGES[1], POSTER_IMAGES[3], POSTER_IMAGES[6], POSTER_IMAGES[8]].map((src, index) => (
+          <img key={index} src={src} alt="" />
         ))}
       </div>
       <div className="hero-noise" aria-hidden="true" />

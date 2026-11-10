@@ -1,20 +1,5 @@
 import { useState, type CSSProperties, type MouseEvent } from "react";
-import { useNavigate } from "react-router-dom";
-import {
-  ArrowUpRight,
-  BookOpen,
-  Clock3,
-  Eye,
-  FileText,
-  Flame,
-  Gamepad2,
-  Image as ImageIcon,
-  Info,
-  Layers,
-  Play,
-} from "lucide-react";
-import { formatDuration, thumbnailUrl } from "../lib/api";
-import { accessLabel } from "../lib/access";
+import { thumbnailUrl } from "../lib/api";
 import type { MediaCategory, MediaSet, MediaType } from "../lib/types";
 import { useReveal } from "../hooks/useReveal";
 
@@ -27,16 +12,9 @@ const typeLabels: Record<MediaType, string> = {
 
 const categoryLabels: Record<MediaCategory, string> = {
   animation: "Animation",
-  arts: "NSFW Arts",
+  arts: "Exclusive Arts",
   games: "2D Game",
   comics: "Manga",
-};
-
-const categoryKanji: Record<MediaCategory, string> = {
-  animation: "映像",
-  arts: "画集",
-  games: "遊戯",
-  comics: "漫画",
 };
 
 const categoryColorGlow: Record<MediaCategory, string> = {
@@ -67,15 +45,11 @@ export function MediaCard({
   index,
   aspectRatio,
   showRank = false,
-  comingSoon = false,
 }: MediaCardProps) {
   const { ref, revealed } = useReveal<HTMLElement>();
-  const navigate = useNavigate();
-  const [hovered, setHovered] = useState(false);
+  const [, setHovered] = useState(false);
 
-  const duration = formatDuration(set.duration_seconds);
   const categoryLabel = categoryLabels[set.category] ?? typeLabels[set.primary_type];
-  const kanji = categoryKanji[set.category] ?? "特選";
   const delay = index ? Math.min(index - 1, 7) * 45 : 0;
   const ratio = aspectRatio ?? "a4";
 
@@ -90,11 +64,6 @@ export function MediaCard({
     else onOpen(set);
   }
 
-  function handleDetailsClick(e: MouseEvent) {
-    e.stopPropagation();
-    navigate(`/content/${set.slug}`);
-  }
-
   return (
     <article
       ref={ref}
@@ -106,7 +75,7 @@ export function MediaCard({
       data-ratio={ratio}
       role="button"
       tabIndex={0}
-      aria-label={`${set.title} — ${categoryLabel}${comingSoon ? " (coming soon)" : ""}`}
+      aria-label={`${set.title} — ${categoryLabel}`}
       onClick={() => activate()}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
@@ -118,7 +87,7 @@ export function MediaCard({
       }}
     >
       <div className="poster-art">
-        {/* Main Artwork Container with category-tailored aspect ratio */}
+        {/* Main Artwork Container with category-tailored aspect ratio - NO TEXT OVERLAYS */}
         <div className="poster-frame" data-ratio={ratio}>
           <img
             className="poster-img"
@@ -127,156 +96,12 @@ export function MediaCard({
             loading="lazy"
           />
 
-          {/* Diagonal Slice Overlay Accent (Inspired by reference aesthetic) */}
+          {/* Diagonal Slice Overlay Accent */}
           <div className="poster-diagonal-cut" aria-hidden="true" />
 
-          {/* Deep Vignette & Dark Edge Gradient */}
+          {/* Subtle Vignette & Dark Edge Gradient */}
           <div className="poster-shade" aria-hidden="true" />
           <div className="poster-edge-highlight" aria-hidden="true" />
-
-          {comingSoon && (
-            <div className="poster-coming-soon" aria-hidden="true">
-              <span className="poster-coming-soon-badge">
-                <Clock3 size={12} /> Coming Soon
-              </span>
-            </div>
-          )}
-
-          {/* Top Badges (New, Trending, Category Kanji) */}
-          <div className="poster-badges">
-            <span className="poster-kanji-pill" title={categoryLabel}>
-              {kanji}
-            </span>
-
-            {set.is_new && <span className="badge badge--new">NEW DROP</span>}
-            {set.is_trending && (
-              <span className="badge badge--trending">
-                <Flame size={10} /> HOT
-              </span>
-            )}
-            {set.version && (
-              <span className="badge badge--version">{set.version}</span>
-            )}
-            {set.chapter_info && (
-              <span className="badge badge--chapter">{set.chapter_info}</span>
-            )}
-            {set.access_level && set.access_level !== "public" && (
-              <span className={`badge badge--access badge--access-${set.access_level}`}>
-                {accessLabel(set.access_level)}
-              </span>
-            )}
-          </div>
-
-          {/* Top Right Quick Action Icon */}
-          <button
-            type="button"
-            className="poster-quick-action"
-            onClick={handleDetailsClick}
-            aria-label={`View details for ${set.title}`}
-            title="View Details"
-          >
-            <ArrowUpRight size={14} />
-          </button>
-
-          {/* Primary Poster Information Overlay (Anchored Directly Over Lower Artwork) */}
-          <div className="poster-artwork-info">
-            <div className="poster-eyebrow-row">
-              <span className="poster-cat-tag">
-                {set.category === "games" && <Gamepad2 size={11} />}
-                {set.category === "comics" && <BookOpen size={11} />}
-                {set.category === "animation" && <Play size={11} />}
-                {set.category === "arts" && <ImageIcon size={11} />}
-                <span>{categoryLabel}</span>
-              </span>
-
-              {set.genre && <span className="poster-genre-tag">{set.genre}</span>}
-            </div>
-
-            <h3 className={`poster-title${set.title.length > 24 ? " poster-title--long" : ""}`} title={set.title}>
-              {set.title}
-            </h3>
-
-            <div className="poster-meta-row">
-              {duration ? (
-                <span className="poster-meta-item">
-                  <Clock3 size={11} /> {duration}
-                </span>
-              ) : set.chapter_info ? (
-                <span className="poster-meta-item">
-                  <FileText size={11} /> {set.chapter_info}
-                </span>
-              ) : (
-                <span className="poster-meta-item">
-                  <Layers size={11} /> {set.asset_count} {set.asset_count === 1 ? "file" : "files"}
-                </span>
-              )}
-
-              <span className="meta-dot" aria-hidden="true" />
-              <span className="poster-meta-tag">2K ULTRA</span>
-
-              {set.views && (
-                <>
-                  <span className="meta-dot" aria-hidden="true" />
-                  <span className="poster-views-tag">
-                    <Eye size={10} /> {(set.views / 1000).toFixed(0)}k
-                  </span>
-                </>
-              )}
-            </div>
-          </div>
-
-          {/* Smooth Interactive Hover Reveal Sheet */}
-          <div className={`poster-hover-sheet${hovered ? " is-hovered" : ""}`}>
-            <div className="poster-hover-header">
-              <span className="poster-hover-category">{categoryLabel}</span>
-              {set.author && <span className="poster-hover-author">{set.author}</span>}
-            </div>
-
-            <p className="poster-hover-desc">
-              {set.description || "Exclusive full-length release available in the private vault."}
-            </p>
-
-            <div className="poster-hover-actions">
-              <button
-                type="button"
-                className="btn btn--primary btn--sm poster-hover-play-btn"
-                onClick={(e) => activate(e)}
-              >
-                {set.category === "games" ? (
-                  <>
-                    <Gamepad2 size={14} />
-                    <span>Play Now</span>
-                  </>
-                ) : set.category === "comics" ? (
-                  <>
-                    <BookOpen size={14} />
-                    <span>Read Now</span>
-                  </>
-                ) : set.primary_type === "image" ? (
-                  <>
-                    <ImageIcon size={14} />
-                    <span>Gallery</span>
-                  </>
-                ) : (
-                  <>
-                    <Play size={14} fill="currentColor" />
-                    <span>Watch Now</span>
-                  </>
-                )}
-              </button>
-
-              <button
-                type="button"
-                className="btn btn--ghost btn--sm poster-hover-details-btn"
-                onClick={handleDetailsClick}
-                aria-label="View details"
-                title="View Release Details"
-              >
-                <Info size={14} />
-                <span>Details</span>
-              </button>
-            </div>
-          </div>
         </div>
 
         {/* Large Cinematic Rank Number for Trending / Featured Lists */}

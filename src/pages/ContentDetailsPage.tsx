@@ -26,11 +26,12 @@ import { useUI } from "../context/UIContext";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
 import { useMediaSets } from "../hooks/useMediaSets";
 import { useOpenMedia } from "../hooks/useOpenMedia";
+import { UNIVERSAL_SET_TAGS } from "../data/posters";
 import { FULL_PRICE_LABEL, PATREON_PAGE_URL, UPGRADE_CTA_LABEL } from "../lib/config";
 
 const categoryLabels: Record<MediaCategory, string> = {
   animation: "2K Animation",
-  arts: "NSFW Arts & Video",
+  arts: "Exclusive Arts & Video",
   games: "2D Game / VN",
   comics: "Manga & Comics",
 };
@@ -263,8 +264,8 @@ export function ContentDetailsPage() {
             <div className="details-tags-wrap">
               <span className="tags-label">Tags:</span>
               <div className="details-tags-list">
-                {(set.tags || ["2KAnimation", "Exclusive", "Uncensored", "Vault"]).map((tag) => (
-                  <Link key={tag} to={`/browse?q=${tag}`} className="details-tag-pill">
+                {(set.tags?.length ? set.tags : UNIVERSAL_SET_TAGS).map((tag) => (
+                  <Link key={tag} to={`/browse?q=${encodeURIComponent(tag)}`} className="details-tag-pill">
                     #{tag}
                   </Link>
                 ))}

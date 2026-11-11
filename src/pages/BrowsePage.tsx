@@ -1,13 +1,15 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import {
   ArrowRight,
   BookOpen,
   Compass,
+  ExternalLink,
   Film,
   Flame,
   Gamepad2,
   Image as ImageIcon,
+  Lock,
   Search,
   SlidersHorizontal,
   Sparkles,
@@ -17,6 +19,7 @@ import { MediaCard } from "../components/MediaCard";
 import { UnlockMoreCard } from "../components/UnlockMoreCard";
 import { MembershipBanner, ErrorBanner } from "../components/MembershipBanner";
 import { RowSkeleton } from "../components/Skeletons";
+import { PatreonMark } from "../components/PatreonMark";
 import { useAuth } from "../context/AuthContext";
 import { useUI } from "../context/UIContext";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
@@ -91,7 +94,17 @@ const categoryInfo: Record<CategoryFilter, CategoryMetaItem> = {
 
 export function BrowsePage({ mode }: { mode?: "trending" | "newest" | "all" }) {
   const isTrendingMode = mode === "trending";
-  const { accessLevel, isPatron, isBasic, canAccess, profile, demoMode, login } = useAuth();
+  const {
+    accessLevel,
+    isPatron,
+    isBasic,
+    isAdmin,
+    canAccess,
+    profile,
+    loading: authLoading,
+    demoMode,
+    login,
+  } = useAuth();
   const { openAuthModal, toast } = useUI();
   const { sets, loading, error, reload } = useMediaSets();
   const { open, player } = useOpenMedia();
@@ -107,6 +120,22 @@ export function BrowsePage({ mode }: { mode?: "trending" | "newest" | "all" }) {
 
   const currentMeta = categoryInfo[category] || categoryInfo.all;
   useDocumentTitle(isTrendingMode ? "Trending Now" : currentMeta.title);
+
+  const hasMembership = Boolean(profile) && (isPatron || isAdmin);
+
+  // The library routes are members-only. Guests get the Patreon connect prompt
+  // and signed-in accounts without a pack get the pack chooser instead of an
+  // empty "no releases" page.
+  useEffect(() => {
+    if (authLoading) return;
+    if (!profile) {
+      openAuthModal("locked");
+      return;
+    }
+    if (!isPatron && !isAdmin) {
+      openAuthModal("purchase");
+    }
+  }, [authLoading, profile, isPatron, isAdmin, openAuthModal]);
 
   // Filter logic across categories, primary_type and search
   const filtered = useMemo(() => {
@@ -174,6 +203,72 @@ export function BrowsePage({ mode }: { mode?: "trending" | "newest" | "all" }) {
       params.set("category", cat);
     }
     setParams(params);
+  }
+
+  if (authLoading) {
+    return (
+      <div className="browse-page-wrapper">
+        <section className="section browse-gate-section">
+          <div className="container">
+            <RowSkeleton count={6} />
+          </div>
+        </section>
+      </div>
+    );
+  }
+
+  if (!hasMembership) {
+    return (
+      <div className="browse-page-wrapper">
+        <MembershipBanner />
+        <section className="section browse-gate-section">
+          <div className="container">
+            <div className="browse-gate">
+              <span className="browse-gate-icon" aria-hidden="true">
+                <Lock size={26} />
+              </span>
+              <p className="eyebrow">Members only</p>
+              <h1>{isTrendingMode ? "Trending Now" : currentMeta.title}</h1>
+              <p className="browse-gate-copy">
+                This part of Jerryhub is reserved for members. Connect your Patreon account to
+                verify your membership, or choose a pack to unlock the library.
+              </p>
+              <div className="browse-gate-actions">
+                {profile ? (
+                  <button
+                    type="button"
+                    className="btn btn--patreon btn--lg btn--block"
+                    onClick={() => openAuthModal("purchase")}
+                  >
+                    <PatreonMark size={18} /> Choose your pack
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    className="btn btn--patreon btn--lg btn--block"
+                    onClick={() => void handleUnlock()}
+                  >
+                    <PatreonMark size={18} /> Continue with Patreon
+                  </button>
+                )}
+                <a
+                  className="btn btn--ghost btn--block"
+                  href={PATREON_PAGE_URL}
+                  target="_blank"
+                  rel="noreferrer noopener"
+                >
+                  Join on Patreon <ExternalLink size={14} />
+                </a>
+              </div>
+              <p className="browse-gate-fineprint">
+                Basic Access from {BASIC_PRICE_LABEL}/mo · Full Access {FULL_PRICE_LABEL}/mo ·
+                cancel anytime
+              </p>
+            </div>
+          </div>
+        </section>
+      </div>
+    );
   }
 
   return (

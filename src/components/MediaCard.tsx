@@ -133,18 +133,8 @@ export function MediaCard({
             </span>
           </div>
 
-          {/* Hover sheet: title, synopsis and the Patreon unlock action */}
+          {/* Hover action only — no titles or descriptions over the artwork */}
           <div className="poster-hover-sheet">
-            <div className="poster-hover-header">
-              <span className="poster-hover-category">{categoryLabel}</span>
-              <span className="poster-hover-author">
-                {set.is_showcase ? "Preview" : "In library"}
-              </span>
-            </div>
-            <h3 className="poster-title">{set.title}</h3>
-            {set.description && (
-              <p className="poster-hover-desc">{set.description}</p>
-            )}
             <div className="poster-hover-actions">
               <span className="btn btn--primary btn--sm poster-hover-play-btn">
                 {locked ? <Lock size={13} /> : <ActionIcon size={13} />}

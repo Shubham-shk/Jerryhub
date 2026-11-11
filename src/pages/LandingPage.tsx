@@ -51,6 +51,20 @@ function fillToTen(real: MediaSet[], showcase: MediaSet[]): MediaSet[] {
   return items.slice(0, 10);
 }
 
+const BASIC_SLOTS = 3;
+
+/**
+ * Storefront tiering: the first three posters of every section are Basic
+ * Access, the rest are Full Access only. Sections marked `allFull` (2D Games)
+ * are Full Access exclusively.
+ */
+function tierSection(items: MediaSet[], allFull = false): MediaSet[] {
+  return items.map((set, index) => ({
+    ...set,
+    access_level: allFull || index >= BASIC_SLOTS ? "full" : "basic",
+  }));
+}
+
 export function LandingPage() {
   useDocumentTitle("");
   const { canAccess } = useAuth();
@@ -58,36 +72,48 @@ export function LandingPage() {
   const { open, player } = useOpenMedia();
 
   // SECTION 2: Trending (Aggregates ALL categories: animation, arts, games, comics based on popularity/views)
-  const trendingList = fillToTen(
-    [...sets]
-      .filter((s) => s.is_trending || (s.views ?? 0) > 80000)
-      .sort(trendingSort),
-    SHOWCASE_TRENDING,
+  const trendingList = tierSection(
+    fillToTen(
+      [...sets]
+        .filter((s) => s.is_trending || (s.views ?? 0) > 80000)
+        .sort(trendingSort),
+      SHOWCASE_TRENDING,
+    ),
   );
 
   // SECTION 3: Newest Uploads (ALL categories sorted newest first)
-  const newestUploads = fillToTen([...sets].sort(newestFirst), SHOWCASE_NEWEST);
+  const newestUploads = tierSection(
+    fillToTen([...sets].sort(newestFirst), SHOWCASE_NEWEST),
+  );
 
   // SECTION 4: Exclusive Arts + Videos (Dedicated section for artwork galleries & video releases)
-  const exclusiveArtsAndVideos = fillToTen(
-    sets
-      .filter((s) => s.category === "arts" || s.category === "animation")
-      .sort(newestFirst),
-    SHOWCASE_NEWEST.filter(
-      (s) => s.category === "arts" || s.category === "animation",
+  const exclusiveArtsAndVideos = tierSection(
+    fillToTen(
+      sets
+        .filter((s) => s.category === "arts" || s.category === "animation")
+        .sort(newestFirst),
+      SHOWCASE_NEWEST.filter(
+        (s) => s.category === "arts" || s.category === "animation",
+      ),
     ),
   );
 
   // SECTION 5: 2D Games (Separate discovery library for 2D games, VNs, RPGs)
-  const gamesList = fillToTen(
-    sets.filter((s) => s.category === "games").sort(newestFirst),
-    SHOWCASE_NEWEST.filter((s) => s.category === "games"),
-  );
+  // Games are Full Access only and shown as Coming Soon until launch.
+  const gamesList = tierSection(
+    fillToTen(
+      sets.filter((s) => s.category === "games").sort(newestFirst),
+      SHOWCASE_NEWEST.filter((s) => s.category === "games"),
+    ),
+    true,
+  ).map((set) => ({ ...set, coming_soon: true }));
 
   // SECTION 6: Manga + Comics (Separate digital manga & illustrated comic library)
-  const mangaComicsList = fillToTen(
-    sets.filter((s) => s.category === "comics").sort(newestFirst),
-    SHOWCASE_NEWEST.filter((s) => s.category === "comics"),
+  const mangaComicsList = tierSection(
+    fillToTen(
+      sets.filter((s) => s.category === "comics").sort(newestFirst),
+      SHOWCASE_NEWEST.filter((s) => s.category === "comics"),
+    ),
   );
 
   return (

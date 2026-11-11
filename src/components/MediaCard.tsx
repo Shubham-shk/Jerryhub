@@ -1,5 +1,5 @@
 import { useState, type CSSProperties, type MouseEvent } from "react";
-import { BookOpen, Gamepad2, Image as ImageIcon, Lock, Play } from "lucide-react";
+import { BookOpen, Clock, Gamepad2, Image as ImageIcon, Lock, Play } from "lucide-react";
 import { thumbnailUrl } from "../lib/api";
 import type { MediaCategory, MediaSet, MediaType } from "../lib/types";
 import { useReveal } from "../hooks/useReveal";
@@ -46,9 +46,12 @@ export function MediaCard({
   index,
   aspectRatio,
   showRank = false,
+  comingSoon = false,
 }: MediaCardProps) {
   const { ref, revealed } = useReveal<HTMLElement>();
   const [, setHovered] = useState(false);
+
+  const isComingSoon = comingSoon || Boolean(set.coming_soon);
 
   const categoryLabel = categoryLabels[set.category] ?? typeLabels[set.primary_type];
   const delay = index ? Math.min(index - 1, 7) * 45 : 0;
@@ -121,6 +124,16 @@ export function MediaCard({
           <div className="poster-shade" aria-hidden="true" />
           <div className="poster-edge-highlight" aria-hidden="true" />
 
+          {/* Coming Soon veil for unreleased titles (2D Games) */}
+          {isComingSoon && (
+            <div className="poster-coming-soon">
+              <span className="poster-coming-soon-badge">
+                <Clock size={12} /> Coming Soon
+              </span>
+              <span className="poster-coming-soon-sub">Available soon</span>
+            </div>
+          )}
+
           {/* Membership badge — every poster states its access level */}
           <div className="poster-badges">
             <span
@@ -137,8 +150,16 @@ export function MediaCard({
           <div className="poster-hover-sheet">
             <div className="poster-hover-actions">
               <span className="btn btn--primary btn--sm poster-hover-play-btn">
-                {locked ? <Lock size={13} /> : <ActionIcon size={13} />}
-                <span>{locked ? "Unlock with Patreon" : actionLabel}</span>
+                {locked ? (
+                  <Lock size={13} />
+                ) : isComingSoon ? (
+                  <Clock size={13} />
+                ) : (
+                  <ActionIcon size={13} />
+                )}
+                <span>
+                  {locked ? "Unlock with Patreon" : isComingSoon ? "Coming soon" : actionLabel}
+                </span>
               </span>
             </div>
           </div>

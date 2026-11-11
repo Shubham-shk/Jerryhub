@@ -8,13 +8,23 @@ import type { MediaSet } from "../lib/types";
 
 export function useOpenMedia() {
   const { accessLevel, profile } = useAuth();
-  const { openAuthModal } = useUI();
+  const { openAuthModal, toast } = useUI();
   const navigate = useNavigate();
   const [activeSet, setActiveSet] = useState<MediaSet | null>(null);
 
   function open(set: MediaSet) {
     if (!profile) {
       openAuthModal("locked");
+      return;
+    }
+
+    // Unreleased titles (2D Games) can be unlocked but not played yet.
+    if (set.coming_soon) {
+      if (canAccessLevel(accessLevel, set.access_level)) {
+        toast("Coming soon — this title unlocks at launch.", "default");
+        return;
+      }
+      openAuthModal(accessLevel === "basic" ? "upgrade" : "purchase");
       return;
     }
 

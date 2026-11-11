@@ -81,6 +81,9 @@ export interface MediaSet {
    */
   is_showcase?: boolean;
 
+  /** True while a title (e.g. a 2D game) is not released yet. */
+  coming_soon?: boolean;
+
   // Rich metadata extensions for premium UI
   genre?: string;
   version?: string;

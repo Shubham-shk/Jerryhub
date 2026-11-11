@@ -51,15 +51,15 @@ export function loginRedirectUri(): string {
 }
 
 /**
- * Redirect URI used by the account-connection flow. If `PATREON_REDIRECT_URI`
- * already points at `patreon-callback` it is reused, which lets a Patreon app
- * with a single registered redirect URI serve both flows.
+ * Redirect URI used by the account-connection flow. A single registered Patreon
+ * redirect URI can serve both flows because `patreon-oauth?action=callback`
+ * dispatches signed login states and database connection states.
  */
 export function connectRedirectUri(): string {
   const explicit = optionalEnv("PATREON_CONNECT_REDIRECT_URI");
   if (explicit) return explicit;
   const shared = optionalEnv("PATREON_REDIRECT_URI");
-  if (shared.endsWith("/patreon-callback")) return shared;
+  if (shared) return shared;
   return `${supabaseBase()}/functions/v1/patreon-callback`;
 }
 

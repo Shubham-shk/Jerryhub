@@ -8,7 +8,7 @@ import {
   type ReactNode,
 } from "react";
 import type { Session, User } from "@supabase/supabase-js";
-import { ADMIN_EMAILS, DEMO_MODE } from "../lib/config";
+import { ADMIN_EMAILS, CONFIG_ERROR, DEMO_MODE, HAS_SUPABASE } from "../lib/config";
 import { canAccessLevel, resolveAccessLevel } from "../lib/access";
 import { patreonLoginUrl } from "../lib/api";
 import { supabase } from "../lib/supabase";
@@ -89,7 +89,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(() =>
     DEMO_MODE ? readDemoProfile() : null,
   );
-  const [loading, setLoading] = useState(!DEMO_MODE);
+  const [loading, setLoading] = useState(HAS_SUPABASE);
 
   const loadProfile = useCallback(async (user: User) => {
     if (!supabase) return;
@@ -131,7 +131,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    if (!supabase || DEMO_MODE) return;
+    if (!DEMO_MODE) {
+      // Clear any demo profile left behind by an older build so it can never
+      // be mistaken for a real session.
+      writeDemoProfile(null);
+    }
+    if (!supabase || DEMO_MODE) {
+      setLoading(false);
+      return;
+    }
     let active = true;
 
     supabase.auth.getSession().then(({ data }) => {
@@ -196,12 +204,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setProfile(next);
       return;
     }
+    if (!supabase) {
+      // Never fall back to a demo session in production. The configuration
+      // error screen blocks the UI, but this guard keeps the failure explicit.
+      console.error(CONFIG_ERROR || "Supabase is not configured.");
+      return;
+    }
     window.location.assign(patreonLoginUrl(returnTo));
   }, []);
 
   const logout = useCallback(async () => {
+    writeDemoProfile(null);
     if (DEMO_MODE) {
-      writeDemoProfile(null);
       setProfile(null);
       return;
     }

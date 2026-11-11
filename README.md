@@ -28,7 +28,7 @@ Built with React + Vite + TypeScript, Supabase, and Patreon OAuth 2.0.
 - **Account page** — Patreon status, verified access level, entitled tier IDs, pledge, last verification, manage/update links, connect/disconnect/refresh Patreon account, and logout.
 - **Real-time membership updates** — Patreon webhooks update `profiles`; Supabase Realtime pushes the change into the UI.
 - **Admin dashboard** — create media sets, choose a homepage collection, set Public/Basic/Full access, upload thumbnails and premium files, recategorise sets, toggle trending/new, delete sets/files, view members and their verified tier IDs, change entitlements, review membership changes, and inspect the Patreon tier mapping.
-- **Demo Mode** — with no Supabase environment variables, the whole UI runs with local sample media and a demo member that can be switched between Basic, Full, and inactive.
+- **Demo Mode (local only)** — opt in with `VITE_ENABLE_DEMO_MODE=true` during `npm run dev` to browse local sample media with a demo member that can switch between Basic, Full, and inactive. Production builds ignore the flag and never create demo sessions.
 
 ---
 
@@ -45,7 +45,7 @@ Built with React + Vite + TypeScript, Supabase, and Patreon OAuth 2.0.
 
 ---
 
-## Quick start (Demo Mode)
+## Quick start (Demo Mode — local development only)
 
 ```bash
 npm install
@@ -54,7 +54,10 @@ npm run dev
 
 Open `http://localhost:5173`.
 
-With no `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY`, the app uses:
+Demo Mode is **off by default**. To use it, set `VITE_ENABLE_DEMO_MODE=true` in
+`.env.local` and start the dev server. It only works in a Vite dev build; a
+production build ignores the flag. With Demo Mode on and no Supabase
+credentials, the app uses:
 
 - a local demo member (active, admin, Full Access by default),
 - 24 generated portrait posters in `public/posters`,
@@ -63,7 +66,9 @@ With no `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY`, the app uses:
 
 Use **Log in with Patreon** to enter the demo member, then open any card. The Account page has demo controls to switch between **Basic Access**, **Full Access**, and **Inactive**.
 
-> Demo Mode is for UI development only. It does not exercise Patreon OAuth, RLS, storage policies, or signed URLs.
+> If Supabase credentials are missing in a production build, the app shows a
+> configuration error instead of creating a demo account. Production never
+> authenticates anyone as a demo user.
 
 ---
 
@@ -112,11 +117,14 @@ In the [Patreon Clients & API Keys portal](https://www.patreon.com/portal/regist
 2. Register these redirect URIs (Patreon allows more than one):
 
    ```text
-   https://YOUR_PROJECT_REF.supabase.co/functions/v1/patreon-callback
    https://YOUR_PROJECT_REF.supabase.co/functions/v1/patreon-oauth?action=callback
+   https://YOUR_PROJECT_REF.supabase.co/functions/v1/patreon-callback
    ```
 
-   The first URI is the account-connection callback and the recommended single callback for new deployments. The second is the legacy login callback. `patreon-callback` accepts both the database-backed connection state and the signed login state, so a Patreon app with only the first URI can serve both flows.
+   `patreon-oauth?action=callback` is the login callback and also dispatches
+   account-connection states, so a Patreon app that only registers this URI can
+   serve both flows. `patreon-callback` is the dedicated account-connection
+   callback and is used when `PATREON_CONNECT_REDIRECT_URI` points at it.
 
 3. Make sure the client can request these scopes:
 
@@ -154,15 +162,15 @@ The function verifies Patreon's `X-Patreon-Signature` (HMAC-MD5) before changing
 
 ```bash
 supabase secrets set \
-  APP_URL=https://jerryhub.store \
-  ALLOWED_ORIGINS=https://www.jerryhub.store \
+  APP_URL=https://www.jerryhub.store \
+  ALLOWED_ORIGINS=https://jerryhub.store \
   PATREON_CLIENT_ID=... \
   PATREON_CLIENT_SECRET=... \
   PATREON_CAMPAIGN_ID=... \
   PATREON_BASIC_TIER_ID=... \
   PATREON_FULL_TIER_ID=... \
   PATREON_REQUIRED_AMOUNT_CENTS=500 \
-  PATREON_REDIRECT_URI="https://YOUR_PROJECT_REF.supabase.co/functions/v1/patreon-callback" \
+  PATREON_REDIRECT_URI="https://YOUR_PROJECT_REF.supabase.co/functions/v1/patreon-oauth?action=callback" \
   PATREON_STATE_SECRET="$(openssl rand -hex 32)" \
   PATREON_WEBHOOK_SECRET=...
 ```
@@ -228,6 +236,11 @@ In **Authentication → Providers / Settings**:
    VITE_PATREON_PAGE_URL=https://www.patreon.com/YOUR_CAMPAIGN
    VITE_ADMIN_EMAILS=you@example.com
    ```
+
+   Leave `VITE_ENABLE_DEMO_MODE` unset (or `false`) in production. Vite embeds
+   these values at build time, so **rebuild and redeploy after changing them**.
+   If the URL or anon key is missing, the deployed site shows a configuration
+   error and never falls back to a demo account.
 
 `vercel.json` already rewrites all routes to `index.html` for client-side routing and sets basic security headers.
 
@@ -323,7 +336,9 @@ This is still not DRM. A verified member can download a file and share it. Short
 
 ## Local development with real Supabase
 
-Demo Mode is the fastest way to work on the UI. To exercise the backend locally:
+Demo Mode is the fastest way to work on the UI, but it must be enabled
+explicitly with `VITE_ENABLE_DEMO_MODE=true` and only runs under `npm run dev`.
+To exercise the real backend locally:
 
 1. Create `.env.local` from `.env.example` and fill in the Vite values.
 2. Link the Supabase project and push the migrations.

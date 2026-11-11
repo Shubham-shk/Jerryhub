@@ -1,20 +1,58 @@
 const rawUrl = import.meta.env.VITE_SUPABASE_URL as string | undefined;
 const rawKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
 
-function usable(value: string | undefined): value is string {
-  return Boolean(
-    value &&
-      value.trim() &&
-      !value.includes("YOUR_PROJECT") &&
-      !value.includes("YOUR_SUPABASE") &&
-      value.startsWith("http"),
+function isPlaceholder(value: string): boolean {
+  const normalized = value.trim().toLowerCase();
+  return (
+    !normalized ||
+    normalized.includes("your_project") ||
+    normalized.includes("your_supabase") ||
+    normalized.includes("your-anon") ||
+    normalized.includes("your_anon") ||
+    normalized.includes("replace-me") ||
+    normalized.includes("example")
   );
 }
 
-export const SUPABASE_URL = usable(rawUrl) ? rawUrl.replace(/\/$/, "") : "";
-export const SUPABASE_ANON_KEY = usable(rawKey) ? rawKey : "";
+function usableUrl(value: string | undefined): value is string {
+  if (!value || isPlaceholder(value)) return false;
+  try {
+    const url = new URL(value.trim());
+    return url.protocol === "https:" || url.protocol === "http:";
+  } catch {
+    return false;
+  }
+}
+
+function usableAnonKey(value: string | undefined): value is string {
+  if (!value || isPlaceholder(value)) return false;
+  const key = value.trim();
+  // Supabase anon keys are JWTs (eyJ...) or publishable keys (sb_publishable_...),
+  // never URLs. The old check required "http", which rejected every real key
+  // and forced the whole site into Demo Mode in production.
+  return key.length >= 30 && !/^https?:\/\//i.test(key);
+}
+
+export const SUPABASE_URL = usableUrl(rawUrl) ? rawUrl.trim().replace(/\/$/, "") : "";
+export const SUPABASE_ANON_KEY = usableAnonKey(rawKey) ? rawKey.trim() : "";
 export const HAS_SUPABASE = Boolean(SUPABASE_URL && SUPABASE_ANON_KEY);
-export const DEMO_MODE = !HAS_SUPABASE;
+
+/**
+ * Demo Mode is a local-development convenience only. It requires BOTH a dev
+ * build and an explicit opt-in flag, so a production bundle can never silently
+ * authenticate someone as a demo patron — even if the Supabase env vars are
+ * missing.
+ */
+const demoRequested =
+  (import.meta.env.VITE_ENABLE_DEMO_MODE as string | undefined) === "true";
+export const IS_DEVELOPMENT = Boolean(import.meta.env.DEV);
+export const DEMO_MODE = IS_DEVELOPMENT && demoRequested && !HAS_SUPABASE;
+
+/** Non-empty when the build cannot authenticate users and demo mode is off. */
+export const CONFIG_ERROR =
+  !HAS_SUPABASE && !DEMO_MODE
+    ? "Supabase authentication is not configured for this build. Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in the hosting provider, then rebuild and redeploy."
+    : "";
 
 /* ----------------------------------------------------------------------------
  * Brand

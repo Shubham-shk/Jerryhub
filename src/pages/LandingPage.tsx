@@ -18,6 +18,7 @@ import { useAuth } from "../context/AuthContext";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
 import { useMediaSets } from "../hooks/useMediaSets";
 import { useOpenMedia } from "../hooks/useOpenMedia";
+import { SHOWCASE_SETS } from "../data/showcase";
 import type { MediaSet } from "../lib/types";
 
 const newestFirst = (a: MediaSet, b: MediaSet) =>
@@ -30,6 +31,26 @@ const trendingSort = (a: MediaSet, b: MediaSet) => {
   return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
 };
 
+const SHOWCASE_TRENDING = [...SHOWCASE_SETS].sort(trendingSort);
+const SHOWCASE_NEWEST = [...SHOWCASE_SETS].sort(newestFirst);
+
+/**
+ * Every homepage section shows a full row of ten posters. Published library
+ * sets always come first; showcase posters fill the rest so the storefront
+ * never looks empty while the private library is still being stocked.
+ */
+function fillToTen(real: MediaSet[], showcase: MediaSet[]): MediaSet[] {
+  const seen = new Set(real.map((set) => set.id));
+  const items = [...real];
+  for (const item of showcase) {
+    if (items.length >= 10) break;
+    if (seen.has(item.id)) continue;
+    seen.add(item.id);
+    items.push(item);
+  }
+  return items.slice(0, 10);
+}
+
 export function LandingPage() {
   useDocumentTitle("");
   const { canAccess } = useAuth();
@@ -37,27 +58,37 @@ export function LandingPage() {
   const { open, player } = useOpenMedia();
 
   // SECTION 2: Trending (Aggregates ALL categories: animation, arts, games, comics based on popularity/views)
-  const trendingSets = [...sets]
-    .filter((s) => s.is_trending || (s.views ?? 0) > 80000)
-    .sort(trendingSort)
-    .slice(0, 10);
-
-  // Fallback if filter is short:
-  const trendingList = trendingSets.length >= 6 ? trendingSets : [...sets].sort(trendingSort).slice(0, 10);
+  const trendingList = fillToTen(
+    [...sets]
+      .filter((s) => s.is_trending || (s.views ?? 0) > 80000)
+      .sort(trendingSort),
+    SHOWCASE_TRENDING,
+  );
 
   // SECTION 3: Newest Uploads (ALL categories sorted newest first)
-  const newestUploads = [...sets].sort(newestFirst).slice(0, 12);
+  const newestUploads = fillToTen([...sets].sort(newestFirst), SHOWCASE_NEWEST);
 
   // SECTION 4: Exclusive Arts + Videos (Dedicated section for artwork galleries & video releases)
-  const exclusiveArtsAndVideos = sets
-    .filter((s) => s.category === "arts" || s.category === "animation")
-    .sort(newestFirst);
+  const exclusiveArtsAndVideos = fillToTen(
+    sets
+      .filter((s) => s.category === "arts" || s.category === "animation")
+      .sort(newestFirst),
+    SHOWCASE_NEWEST.filter(
+      (s) => s.category === "arts" || s.category === "animation",
+    ),
+  );
 
   // SECTION 5: 2D Games (Separate discovery library for 2D games, VNs, RPGs)
-  const gamesList = sets.filter((s) => s.category === "games").sort(newestFirst);
+  const gamesList = fillToTen(
+    sets.filter((s) => s.category === "games").sort(newestFirst),
+    SHOWCASE_NEWEST.filter((s) => s.category === "games"),
+  );
 
   // SECTION 6: Manga + Comics (Separate digital manga & illustrated comic library)
-  const mangaComicsList = sets.filter((s) => s.category === "comics").sort(newestFirst);
+  const mangaComicsList = fillToTen(
+    sets.filter((s) => s.category === "comics").sort(newestFirst),
+    SHOWCASE_NEWEST.filter((s) => s.category === "comics"),
+  );
 
   return (
     <>

@@ -75,6 +75,12 @@ export interface MediaSet {
   assets?: MediaAsset[];
   demo_assets?: MediaAsset[];
 
+  /**
+   * True for the marketing posters shown on the homepage before the private
+   * library has enough published sets. Showcase cards never open the player.
+   */
+  is_showcase?: boolean;
+
   // Rich metadata extensions for premium UI
   genre?: string;
   version?: string;

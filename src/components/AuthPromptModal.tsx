@@ -1,6 +1,13 @@
 import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
-import { Check, ExternalLink, ShieldAlert, Sparkles, UserCheck, X } from "lucide-react";
+import {
+  Check,
+  ExternalLink,
+  ShieldAlert,
+  Sparkles,
+  UserCheck,
+  X,
+} from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { useUI } from "../context/UIContext";
 import {
@@ -15,13 +22,12 @@ import { Logo } from "./Logo";
 const basicPerks = [
   "Entry-level premium collection",
   "Basic member-exclusive content",
-  "Streaming and downloads for Basic content",
+  "Streaming and downloads",
 ];
 
 const fullPerks = [
-  "Everything included in Basic Access",
-  "All premium animation collections",
-  "All eligible videos, artwork, games, manga & comics",
+  "Everything in Basic Access",
+  "All animation, games, manga & art",
   "Every future Full Access drop",
 ];
 
@@ -48,6 +54,8 @@ export function AuthPromptModal() {
   const inactive = authModalReason === "inactive";
   const admin = authModalReason === "admin";
   const upgrade = authModalReason === "upgrade";
+  const purchase = authModalReason === "purchase";
+  const needsLogin = !profile;
 
   async function handleLogin() {
     sessionStorage.setItem("lhh_post_login_path", location.pathname);
@@ -63,10 +71,40 @@ export function AuthPromptModal() {
     await handleLogin();
   }
 
+  const eyebrow = admin
+    ? "Restricted area"
+    : inactive
+      ? "Membership check"
+      : upgrade
+        ? "Upgrade your membership"
+        : purchase
+          ? "Choose your pack"
+          : "Members only";
+
+  const title = admin
+    ? "Admin access only."
+    : inactive
+      ? "Your Patreon membership is inactive."
+      : upgrade
+        ? `Unlock everything with Full Access — ${FULL_PRICE_LABEL}`
+        : purchase
+          ? "Pick your membership pack."
+          : "Unlock the Jerryhub library.";
+
+  const copy = admin
+    ? "This dashboard is limited to the site owner. Sign in with the admin Patreon account to continue."
+    : inactive
+      ? "Reactivate your pledge to regain access. We re-check your entitlement with Patreon every time you sign in, and webhooks keep your status in sync in real time."
+      : upgrade
+        ? "This release is included with Full Access. Your Basic Access membership is active — upgrade to unlock the complete Jerryhub library."
+        : purchase
+          ? "Every pack unlocks the private vault instantly. Full Access is our best seller and includes everything we release."
+          : `This release is reserved for Jerryhub members. Connect your Patreon account to verify your tier, or choose a pack to get started from ${BASIC_PRICE_LABEL}/mo.`;
+
   return (
     <div className="modal-backdrop" onMouseDown={closeAuthModal}>
       <div
-        className="modal auth-modal"
+        className={`modal auth-modal${admin ? "" : " auth-modal--plans"}`}
         role="dialog"
         aria-modal="true"
         aria-labelledby="auth-modal-title"
@@ -88,54 +126,91 @@ export function AuthPromptModal() {
           )}
         </div>
 
-        <p className="eyebrow">
-          {inactive
-            ? "Membership check"
-            : admin
-              ? "Restricted area"
-              : upgrade
-                ? "Upgrade your membership"
-                : "Members only"}
-        </p>
-        <h2 id="auth-modal-title">
-          {inactive
-            ? "Your Patreon membership is inactive."
-            : admin
-              ? "Admin access only."
-              : upgrade
-                ? `Upgrade to Full Access — ${FULL_PRICE_LABEL}`
-                : "Unlock the Jerryhub library."}
-        </h2>
+        <p className="eyebrow">{eyebrow}</p>
+        <h2 id="auth-modal-title">{title}</h2>
 
-        <p className="auth-modal-copy">
-          {inactive
-            ? "Update your pledge to regain access. We re-check your entitlement with Patreon every time you sign in, and webhooks keep your status in sync in real time."
-            : admin
-              ? "This dashboard is limited to the site owner. Sign in with the admin Patreon account to continue."
-              : upgrade
-                ? "This release is included with Full Access. Your Basic Access membership is active — upgrade to Full Access to unlock the complete Jerryhub library."
-                : `This release is reserved for Jerryhub members. Choose Basic Access from ${BASIC_PRICE_LABEL} or unlock everything with Full Access at ${FULL_PRICE_LABEL}.`}
-        </p>
+        <p className="auth-modal-copy">{copy}</p>
 
-        {!inactive && !admin && (
-          <ul className="auth-modal-perks">
-            {(upgrade || !isBasic ? fullPerks : basicPerks).map((perk) => (
-              <li key={perk}>
-                <Check size={15} /> {perk}
-              </li>
-            ))}
-          </ul>
+        {!admin && (
+          <div className="auth-plan-grid">
+            <article className="auth-plan">
+              <p className="auth-plan-name">Basic Access</p>
+              <p className="auth-plan-price">
+                {BASIC_PRICE_LABEL}
+                <span>/mo</span>
+              </p>
+              <ul className="auth-plan-list">
+                {basicPerks.map((perk) => (
+                  <li key={perk}>
+                    <Check size={13} /> {perk}
+                  </li>
+                ))}
+              </ul>
+            </article>
+
+            <article className="auth-plan auth-plan--best">
+              <span className="auth-plan-best">Best Seller</span>
+              <p className="auth-plan-name">Full Access</p>
+              <p className="auth-plan-price">
+                {FULL_PRICE_LABEL}
+                <span>/mo</span>
+              </p>
+              <ul className="auth-plan-list">
+                {fullPerks.map((perk) => (
+                  <li key={perk}>
+                    <Check size={13} /> {perk}
+                  </li>
+                ))}
+              </ul>
+            </article>
+          </div>
         )}
 
-        {inactive ? (
+        {admin ? (
           <div className="auth-modal-actions">
+            <button type="button" className="btn btn--patreon btn--lg btn--block" onClick={handleLogin}>
+              <PatreonMark size={20} /> Continue with Patreon
+            </button>
+          </div>
+        ) : needsLogin ? (
+          <div className="auth-modal-actions">
+            <button type="button" className="btn btn--patreon btn--lg btn--block" onClick={handleLogin}>
+              <PatreonMark size={20} /> Continue with Patreon
+            </button>
             <a
-              className="btn btn--primary btn--block"
+              className="btn btn--ghost btn--block"
               href={PATREON_PAGE_URL}
               target="_blank"
               rel="noreferrer noopener"
             >
-              <ExternalLink size={17} /> Update pledge on Patreon
+              <ExternalLink size={16} /> Join on Patreon
+            </a>
+            <p className="auth-modal-price">
+              Memberships start at <strong>{BASIC_PRICE_LABEL}</strong>. Full Access{" "}
+              <strong>{FULL_PRICE_LABEL}</strong> is the best seller. Active Patreon membership
+              required.
+            </p>
+            {demoMode && (
+              <p className="demo-note">
+                <strong>Demo mode.</strong> Supabase isn&apos;t configured, so this button
+                signs you in locally as a verified Full Access member.
+              </p>
+            )}
+          </div>
+        ) : (
+          <div className="auth-modal-actions">
+            <a
+              className="btn btn--patreon btn--lg btn--block"
+              href={PATREON_PAGE_URL}
+              target="_blank"
+              rel="noreferrer noopener"
+            >
+              <PatreonMark size={20} />
+              {inactive
+                ? "Reactivate on Patreon"
+                : upgrade
+                  ? UPGRADE_CTA_LABEL
+                  : `Join on Patreon — ${FULL_PRICE_LABEL}`}
             </a>
             <button type="button" className="btn btn--ghost btn--block" onClick={handleSwitchAccount}>
               Sign in with a different account
@@ -143,48 +218,10 @@ export function AuthPromptModal() {
             {profile?.email && (
               <p className="auth-modal-fineprint">Signed in as {profile.email}</p>
             )}
-          </div>
-        ) : upgrade ? (
-          <div className="auth-modal-actions">
-            <a
-              className="btn btn--primary btn--block"
-              href={PATREON_PAGE_URL}
-              target="_blank"
-              rel="noreferrer noopener"
-            >
-              <ExternalLink size={17} /> {UPGRADE_CTA_LABEL}
-            </a>
-            <a className="auth-modal-link" href="/#pricing">
-              Compare membership plans <ExternalLink size={13} />
-            </a>
-            {profile?.email && (
-              <p className="auth-modal-fineprint">Signed in as {profile.email}</p>
-            )}
-          </div>
-        ) : (
-          <div className="auth-modal-actions">
-            <button type="button" className="btn btn--patreon btn--lg btn--block" onClick={handleLogin}>
-              <PatreonMark size={20} /> Continue with Patreon
-            </button>
-            <p className="auth-modal-price">
-              Memberships start at <strong>{BASIC_PRICE_LABEL}</strong>. Basic Access{" "}
-              {BASIC_PRICE_LABEL} · Full Access {FULL_PRICE_LABEL}. Active Patreon
-              membership required.
-            </p>
-            {!admin && (
-              <a
-                className="auth-modal-link"
-                href={PATREON_PAGE_URL}
-                target="_blank"
-                rel="noreferrer noopener"
-              >
-                Not a member yet? Join on Patreon <ExternalLink size={13} />
-              </a>
-            )}
-            {demoMode && (
-              <p className="demo-note">
-                <strong>Demo mode.</strong> Supabase isn&apos;t configured, so this button
-                signs you in locally as a verified Full Access member.
+            {isBasic && !upgrade && (
+              <p className="auth-modal-price">
+                You&apos;re on Basic Access. Upgrade to Full Access at{" "}
+                <strong>{FULL_PRICE_LABEL}</strong> for everything.
               </p>
             )}
           </div>

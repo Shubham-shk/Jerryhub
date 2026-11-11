@@ -9,7 +9,7 @@ import {
   type ReactNode,
 } from "react";
 
-export type AuthModalReason = "login" | "locked" | "inactive" | "upgrade" | "admin" | "account";
+export type AuthModalReason = "login" | "locked" | "inactive" | "upgrade" | "purchase" | "admin" | "account";
 
 interface Toast {
   id: number;

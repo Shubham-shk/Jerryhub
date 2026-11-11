@@ -1407,3 +1407,149 @@ html {
   font-size: 11.5px;
 }
 
+
+/* ============================================================
+   Storefront showcase + membership chooser
+   ============================================================ */
+
+/* ---------- access strip actions ---------- */
+.access-strip-actions {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.access-strip-actions .access-strip-btn {
+  white-space: nowrap;
+}
+.access-strip-actions .btn--patreon {
+  box-shadow: 0 14px 34px -18px rgba(249, 104, 84, 0.9);
+}
+
+/* ---------- pricing head CTA ---------- */
+.pricing-head-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin-top: 20px;
+}
+.pricing-head-actions .btn {
+  min-height: 46px;
+}
+.pricing-head-note {
+  color: var(--muted-2);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+}
+
+/* ---------- auth modal plan chooser ---------- */
+.auth-modal--plans {
+  width: min(640px, 100%);
+}
+.auth-plan-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin: 20px 0 16px;
+}
+.auth-plan {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  padding: 16px 14px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.02);
+  overflow: hidden;
+}
+.auth-plan--best {
+  border-color: rgba(255, 95, 158, 0.4);
+  background:
+    linear-gradient(160deg, rgba(255, 45, 120, 0.14), rgba(139, 92, 246, 0.08) 60%, rgba(255, 255, 255, 0.02)),
+    #14101a;
+  box-shadow: 0 20px 50px -34px rgba(255, 45, 120, 0.85);
+}
+.auth-plan-best {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: inline-flex;
+  align-items: center;
+  height: 20px;
+  padding: 0 8px;
+  border: 1px solid rgba(255, 95, 158, 0.45);
+  border-radius: 999px;
+  background: rgba(255, 45, 120, 0.16);
+  color: #ffc2d9;
+  font-size: 8.5px;
+  font-weight: 750;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.auth-plan-name {
+  margin: 0;
+  padding-right: 62px;
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--pink-soft);
+}
+.auth-plan--best .auth-plan-name {
+  color: #ffd1e3;
+}
+.auth-plan-price {
+  margin: 8px 0 12px;
+  font-family: var(--font-display);
+  font-size: 30px;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.04em;
+  color: #fff;
+}
+.auth-plan-price span {
+  margin-left: 2px;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0;
+  color: var(--muted);
+}
+.auth-plan-list {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  margin: 0;
+  padding: 12px 0 0;
+  border-top: 1px solid var(--line);
+  list-style: none;
+}
+.auth-plan-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  color: #d8d8e0;
+  font-size: 10.5px;
+  line-height: 1.45;
+}
+.auth-plan-list svg {
+  flex-shrink: 0;
+  margin-top: 1px;
+  color: var(--green);
+}
+
+@media (max-width: 560px) {
+  .auth-plan-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .access-strip-actions {
+    width: 100%;
+  }
+  .access-strip-actions .access-strip-btn {
+    flex: 1 1 auto;
+    justify-content: center;
+  }
+}

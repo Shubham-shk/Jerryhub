@@ -115,7 +115,7 @@ export const PATREON_TIER_IDS = [
 
 export const PATREON_PAGE_URL =
   (import.meta.env.VITE_PATREON_PAGE_URL as string | undefined)?.trim() ||
-  "https://www.patreon.com";
+  "https://www.patreon.com/16612283/join";
 
 export const ADMIN_EMAILS = ((import.meta.env.VITE_ADMIN_EMAILS as string | undefined) ?? "")
   .split(",")

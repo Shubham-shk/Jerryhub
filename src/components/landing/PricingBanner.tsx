@@ -10,6 +10,7 @@ import {
   PATREON_PAGE_URL,
 } from "../../lib/config";
 import type { MembershipTier } from "../../lib/types";
+import { PatreonMark } from "../PatreonMark";
 
 const basicIncludes = [
   "Entry-level premium collection",
@@ -63,6 +64,19 @@ export function PricingBanner() {
             unlock the complete Jerryhub experience with full access to all available
             content.
           </p>
+          <div className="pricing-head-actions">
+            <a
+              className="btn btn--patreon btn--lg"
+              href={PATREON_PAGE_URL}
+              target="_blank"
+              rel="noreferrer noopener"
+            >
+              <PatreonMark size={18} /> Join on Patreon <ExternalLink size={14} />
+            </a>
+            <span className="pricing-head-note">
+              Full Access {FULL_PRICE_LABEL} · cancel anytime
+            </span>
+          </div>
         </div>
 
         <div className="pricing-grid">
@@ -100,7 +114,7 @@ export function PricingBanner() {
           </article>
 
           <article className="pricing-card pricing-card--featured">
-            <span className="pricing-recommended">Recommended</span>
+            <span className="pricing-recommended">Best Seller</span>
             <div className="pricing-plan-head">
               <div>
                 <p className="pricing-plan-name">Full Access</p>

@@ -1,4 +1,5 @@
 import { useState, type CSSProperties, type MouseEvent } from "react";
+import { BookOpen, Gamepad2, Image as ImageIcon, Lock, Play } from "lucide-react";
 import { thumbnailUrl } from "../lib/api";
 import type { MediaCategory, MediaSet, MediaType } from "../lib/types";
 import { useReveal } from "../hooks/useReveal";
@@ -55,6 +56,23 @@ export function MediaCard({
 
   const glowColor = categoryColorGlow[set.category] ?? "rgba(255, 45, 120, 0.5)";
 
+  const actionLabel =
+    set.category === "comics"
+      ? "Read now"
+      : set.category === "games"
+        ? "Play now"
+        : set.category === "arts"
+          ? "View gallery"
+          : "Watch now";
+  const ActionIcon =
+    set.category === "comics"
+      ? BookOpen
+      : set.category === "games"
+        ? Gamepad2
+        : set.category === "arts"
+          ? ImageIcon
+          : Play;
+
   function activate(e?: MouseEvent) {
     if (e) {
       e.preventDefault();
@@ -102,6 +120,38 @@ export function MediaCard({
           {/* Subtle Vignette & Dark Edge Gradient */}
           <div className="poster-shade" aria-hidden="true" />
           <div className="poster-edge-highlight" aria-hidden="true" />
+
+          {/* Membership badge — every poster states its access level */}
+          <div className="poster-badges">
+            <span
+              className={`badge ${
+                set.access_level === "full" ? "badge--access-full" : "badge--access-basic"
+              }`}
+            >
+              {locked ? <Lock size={10} /> : null}
+              {set.access_level === "full" ? "Full Access" : "Basic Access"}
+            </span>
+          </div>
+
+          {/* Hover sheet: title, synopsis and the Patreon unlock action */}
+          <div className="poster-hover-sheet">
+            <div className="poster-hover-header">
+              <span className="poster-hover-category">{categoryLabel}</span>
+              <span className="poster-hover-author">
+                {set.is_showcase ? "Preview" : "In library"}
+              </span>
+            </div>
+            <h3 className="poster-title">{set.title}</h3>
+            {set.description && (
+              <p className="poster-hover-desc">{set.description}</p>
+            )}
+            <div className="poster-hover-actions">
+              <span className="btn btn--primary btn--sm poster-hover-play-btn">
+                {locked ? <Lock size={13} /> : <ActionIcon size={13} />}
+                <span>{locked ? "Unlock with Patreon" : actionLabel}</span>
+              </span>
+            </div>
+          </div>
         </div>
 
         {/* Large Cinematic Rank Number for Trending / Featured Lists */}

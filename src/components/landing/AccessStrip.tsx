@@ -1,7 +1,12 @@
-import { ArrowRight, Sparkles } from "lucide-react";
+import { ArrowRight, ExternalLink, Sparkles } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
-import { BASIC_PRICE_LABEL, FULL_PRICE_LABEL } from "../../lib/config";
+import {
+  BASIC_PRICE_LABEL,
+  FULL_PRICE_LABEL,
+  PATREON_PAGE_URL,
+} from "../../lib/config";
+import { PatreonMark } from "../PatreonMark";
 
 export function AccessStrip() {
   const { isPatron, profile } = useAuth();
@@ -21,19 +26,30 @@ export function AccessStrip() {
           complete Jerryhub library.
         </span>
       </div>
-      {isPatron ? (
-        <Link to="/newest" className="btn btn--primary access-strip-btn">
-          Open library <ArrowRight size={15} />
-        </Link>
-      ) : profile ? (
-        <a href="#pricing" className="btn btn--primary access-strip-btn">
-          Explore memberships <ArrowRight size={15} />
-        </a>
-      ) : (
-        <a href="#pricing" className="btn btn--primary access-strip-btn">
-          <Sparkles size={15} /> Explore memberships
-        </a>
-      )}
+      <div className="access-strip-actions">
+        {isPatron ? (
+          <Link to="/newest" className="btn btn--primary access-strip-btn">
+            Open library <ArrowRight size={15} />
+          </Link>
+        ) : (
+          <>
+            <a
+              className="btn btn--patreon access-strip-btn"
+              href={PATREON_PAGE_URL}
+              target="_blank"
+              rel="noreferrer noopener"
+            >
+              <PatreonMark size={16} /> Join on Patreon
+              <ExternalLink size={13} />
+            </a>
+            {!profile && (
+              <a href="#pricing" className="btn btn--ghost access-strip-btn">
+                Compare packs
+              </a>
+            )}
+          </>
+        )}
+      </div>
     </div>
   );
 }

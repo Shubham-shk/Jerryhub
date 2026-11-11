@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useUI } from "../context/UIContext";
 import { PlayerModal } from "../components/PlayerModal";
@@ -8,6 +9,7 @@ import type { MediaSet } from "../lib/types";
 export function useOpenMedia() {
   const { accessLevel, profile } = useAuth();
   const { openAuthModal } = useUI();
+  const navigate = useNavigate();
   const [activeSet, setActiveSet] = useState<MediaSet | null>(null);
 
   function open(set: MediaSet) {
@@ -15,12 +17,23 @@ export function useOpenMedia() {
       openAuthModal("locked");
       return;
     }
+
+    // Showcase posters are marketing previews, not playable library items.
+    if (set.is_showcase) {
+      if (accessLevel === "full" || (accessLevel === "basic" && set.access_level === "basic")) {
+        navigate("/browse");
+        return;
+      }
+      openAuthModal(accessLevel === "basic" ? "upgrade" : "purchase");
+      return;
+    }
+
     if (canAccessLevel(accessLevel, set.access_level)) {
       setActiveSet(set);
       return;
     }
     if (accessLevel === "public") {
-      openAuthModal("inactive");
+      openAuthModal("purchase");
       return;
     }
     openAuthModal("upgrade");

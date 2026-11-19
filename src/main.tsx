@@ -5,6 +5,7 @@ import App from "./App";
 import { ConfigErrorScreen } from "./components/ConfigError";
 import { AgeGateProvider } from "./context/AgeGateContext";
 import { AuthProvider } from "./context/AuthContext";
+import { SiteAssetsProvider } from "./context/SiteAssetsContext";
 import { UIProvider } from "./context/UIContext";
 import { CONFIG_ERROR } from "./lib/config";
 import "./styles.css";
@@ -17,9 +18,11 @@ createRoot(document.getElementById("root")!).render(
       <BrowserRouter>
         <AgeGateProvider>
           <AuthProvider>
-            <UIProvider>
-              <App />
-            </UIProvider>
+            <SiteAssetsProvider>
+              <UIProvider>
+                <App />
+              </UIProvider>
+            </SiteAssetsProvider>
           </AuthProvider>
         </AgeGateProvider>
       </BrowserRouter>

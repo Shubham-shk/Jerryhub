@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 import { Carousel } from "../components/Carousel";
@@ -15,10 +16,12 @@ import { HowItWorks } from "../components/landing/HowItWorks";
 import { FAQAccordion } from "../components/landing/FAQAccordion";
 import { FinalCTA } from "../components/landing/FinalCTA";
 import { useAuth } from "../context/AuthContext";
+import { useSiteAssets } from "../context/SiteAssetsContext";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
 import { useMediaSets } from "../hooks/useMediaSets";
 import { useOpenMedia } from "../hooks/useOpenMedia";
 import { SHOWCASE_SETS } from "../data/showcase";
+import { posterSlotForImage } from "../lib/siteSlots";
 import type { MediaSet } from "../lib/types";
 
 const newestFirst = (a: MediaSet, b: MediaSet) =>
@@ -31,8 +34,20 @@ const trendingSort = (a: MediaSet, b: MediaSet) => {
   return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
 };
 
-const SHOWCASE_TRENDING = [...SHOWCASE_SETS].sort(trendingSort);
-const SHOWCASE_NEWEST = [...SHOWCASE_SETS].sort(newestFirst);
+/**
+ * Showcase cards reuse the bundled poster artwork. When an admin replaces that
+ * artwork in the Site artwork manager, the same replacement appears on the
+ * matching catalogue cards without a second slot.
+ */
+function withSiteArtwork(
+  sets: MediaSet[],
+  getImage: (slot: string, fallback: string) => string,
+): MediaSet[] {
+  return sets.map((set) => {
+    const slot = posterSlotForImage(set.thumbnail_path);
+    return slot ? { ...set, thumbnail_path: getImage(slot, set.thumbnail_path) } : set;
+  });
+}
 
 /**
  * Every homepage section shows a full row of ten posters. Published library
@@ -70,6 +85,16 @@ export function LandingPage() {
   const { canAccess } = useAuth();
   const { sets, loading, error, reload } = useMediaSets();
   const { open, player } = useOpenMedia();
+  const { getImage } = useSiteAssets();
+
+  const showcaseTrending = useMemo(
+    () => withSiteArtwork([...SHOWCASE_SETS].sort(trendingSort), getImage),
+    [getImage],
+  );
+  const showcaseNewest = useMemo(
+    () => withSiteArtwork([...SHOWCASE_SETS].sort(newestFirst), getImage),
+    [getImage],
+  );
 
   // SECTION 2: Trending (Aggregates ALL categories: animation, arts, games, comics based on popularity/views)
   const trendingList = tierSection(
@@ -77,13 +102,13 @@ export function LandingPage() {
       [...sets]
         .filter((s) => s.is_trending || (s.views ?? 0) > 80000)
         .sort(trendingSort),
-      SHOWCASE_TRENDING,
+      showcaseTrending,
     ),
   );
 
   // SECTION 3: Newest Uploads (ALL categories sorted newest first)
   const newestUploads = tierSection(
-    fillToTen([...sets].sort(newestFirst), SHOWCASE_NEWEST),
+    fillToTen([...sets].sort(newestFirst), showcaseNewest),
   );
 
   // SECTION 4: Exclusive Arts + Videos (Dedicated section for artwork galleries & video releases)
@@ -92,7 +117,7 @@ export function LandingPage() {
       sets
         .filter((s) => s.category === "arts" || s.category === "animation")
         .sort(newestFirst),
-      SHOWCASE_NEWEST.filter(
+      showcaseNewest.filter(
         (s) => s.category === "arts" || s.category === "animation",
       ),
     ),
@@ -103,7 +128,7 @@ export function LandingPage() {
   const gamesList = tierSection(
     fillToTen(
       sets.filter((s) => s.category === "games").sort(newestFirst),
-      SHOWCASE_NEWEST.filter((s) => s.category === "games"),
+      showcaseNewest.filter((s) => s.category === "games"),
     ),
     true,
   ).map((set) => ({ ...set, coming_soon: true }));
@@ -112,7 +137,7 @@ export function LandingPage() {
   const mangaComicsList = tierSection(
     fillToTen(
       sets.filter((s) => s.category === "comics").sort(newestFirst),
-      SHOWCASE_NEWEST.filter((s) => s.category === "comics"),
+      showcaseNewest.filter((s) => s.category === "comics"),
     ),
   );
 

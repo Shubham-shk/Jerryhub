@@ -2,14 +2,18 @@ import { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, LogOut, ShieldAlert } from "lucide-react";
 import { useAgeGate, detectRegion } from "../context/AgeGateContext";
+import { useSiteAssets } from "../context/SiteAssetsContext";
 import { BRAND_NAME } from "../lib/config";
 import { Logo } from "./Logo";
 import { POSTER_IMAGES } from "../data/posters";
 
-const collage = POSTER_IMAGES.slice(0, 6);
-
 export function AgeGate() {
   const { verified, accept } = useAgeGate();
+  const { getImage } = useSiteAssets();
+
+  const collage = POSTER_IMAGES.slice(0, 6).map((src, index) =>
+    getImage(`age-gate-${String(index + 1).padStart(2, "0")}`, src),
+  );
 
   useEffect(() => {
     if (verified) return;
@@ -24,7 +28,7 @@ export function AgeGate() {
     <div className="age-gate" role="dialog" aria-modal="true" aria-labelledby="age-gate-title">
       <div className="age-gate-bg" aria-hidden="true">
         {collage.map((src, index) => (
-          <img key={src} src={src} alt="" style={{ animationDelay: `${index * 0.6}s` }} />
+          <img key={index} src={src} alt="" style={{ animationDelay: `${index * 0.6}s` }} />
         ))}
       </div>
       <div className="age-gate-overlay" aria-hidden="true" />

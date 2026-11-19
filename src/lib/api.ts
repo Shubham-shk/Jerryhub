@@ -12,6 +12,31 @@ export function thumbnailUrl(path: string | null | undefined): string {
   return `${SUPABASE_URL}/storage/v1/object/public/${THUMBNAIL_BUCKET}/${path.replace(/^\//, "")}`;
 }
 
+/**
+ * Admin-uploaded replacements for homepage posters and section banners.
+ * Missing table / offline / demo mode all resolve to an empty map so every
+ * component keeps using the artwork bundled with the site.
+ */
+export async function fetchSiteAssets(): Promise<Record<string, string>> {
+  if (DEMO_MODE || !supabase) return {};
+
+  const { data, error } = await supabase
+    .from("site_assets")
+    .select("slot, image_path, updated_at");
+
+  if (error) return {};
+
+  return Object.fromEntries(
+    (data ?? []).map((row) => {
+      const url = thumbnailUrl(row.image_path as string);
+      if (!url) return [row.slot as string, ""];
+      const version = row.updated_at ? String(row.updated_at) : "";
+      const separator = url.includes("?") ? "&" : "?";
+      return [row.slot as string, version ? `${url}${separator}v=${encodeURIComponent(version)}` : url];
+    }),
+  );
+}
+
 function inferCategory(row: Record<string, unknown>): MediaSet["category"] {
   const value = row.category;
   if (value === "animation" || value === "arts" || value === "games" || value === "comics") {

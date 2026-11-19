@@ -21,6 +21,7 @@ import { MembershipBanner, ErrorBanner } from "../components/MembershipBanner";
 import { RowSkeleton } from "../components/Skeletons";
 import { PatreonMark } from "../components/PatreonMark";
 import { useAuth } from "../context/AuthContext";
+import { useSiteAssets } from "../context/SiteAssetsContext";
 import { useUI } from "../context/UIContext";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
 import { useMediaSets } from "../hooks/useMediaSets";
@@ -106,6 +107,7 @@ export function BrowsePage({ mode }: { mode?: "trending" | "newest" | "all" }) {
     login,
   } = useAuth();
   const { openAuthModal, toast } = useUI();
+  const { getImage } = useSiteAssets();
   const { sets, loading, error, reload } = useMediaSets();
   const { open, player } = useOpenMedia();
   const [params, setParams] = useSearchParams();
@@ -278,7 +280,13 @@ export function BrowsePage({ mode }: { mode?: "trending" | "newest" | "all" }) {
       {/* Hero Header for Browse / Content Discovery */}
       <section className="library-hero browse-hero">
         <div className="library-hero-bg" aria-hidden="true">
-          <img src={isTrendingMode ? POSTER_IMAGES[8] : POSTER_IMAGES[9]} alt="" />
+          <img
+            src={getImage(
+              isTrendingMode ? "browse-trending" : "browse-all",
+              isTrendingMode ? POSTER_IMAGES[8] : POSTER_IMAGES[9],
+            )}
+            alt=""
+          />
           <div className="browse-hero-ambient" />
         </div>
 

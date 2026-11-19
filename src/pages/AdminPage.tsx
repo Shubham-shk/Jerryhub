@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import { MembershipBanner } from "../components/MembershipBanner";
 import { StatusPill } from "../components/StatusPill";
+import { SiteArtworkManager } from "../components/admin/SiteArtworkManager";
 import { useAuth } from "../context/AuthContext";
 import { useUI } from "../context/UIContext";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
@@ -132,6 +133,8 @@ export function AdminPage() {
   const [thumbnail, setThumbnail] = useState<File | null>(null);
   const [creating, setCreating] = useState(false);
   const thumbInputRef = useRef<HTMLInputElement | null>(null);
+  const posterInputRef = useRef<HTMLInputElement | null>(null);
+  const [posterTarget, setPosterTarget] = useState<MediaSet | null>(null);
 
   const [assetSetId, setAssetSetId] = useState("");
   const [assetType, setAssetType] = useState<MediaType>("video");
@@ -273,6 +276,52 @@ export function AdminPage() {
       toast(nextError instanceof Error ? nextError.message : "Could not create the set.", "error");
     } finally {
       setCreating(false);
+    }
+  }
+
+  async function replacePoster(set: MediaSet, file: File) {
+    if (!requireLive()) return;
+    if (!file.type.startsWith("image/")) {
+      toast("Choose an image file (PNG, JPG, WebP or GIF).", "error");
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      toast("Poster images must be 10 MB or smaller.", "error");
+      return;
+    }
+
+    setBusy(`${set.id}-poster`);
+    const client = requireSupabase();
+    const path = `sets/${crypto.randomUUID()}-${safeName(file.name)}`;
+    try {
+      const upload = await client.storage
+        .from("thumbnails")
+        .upload(path, file, { cacheControl: "3600", upsert: false });
+      if (upload.error) throw upload.error;
+
+      const update = await client
+        .from("media_sets")
+        .update({ thumbnail_path: path })
+        .eq("id", set.id);
+      if (update.error) {
+        await client.storage.from("thumbnails").remove([path]);
+        throw update.error;
+      }
+
+      if (set.thumbnail_path && !/^https?:\/\//i.test(set.thumbnail_path)) {
+        await client.storage.from("thumbnails").remove([set.thumbnail_path]);
+      }
+
+      setSets((current) =>
+        current.map((item) =>
+          item.id === set.id ? { ...item, thumbnail_path: path } : item,
+        ),
+      );
+      toast("Poster updated.", "success");
+    } catch (nextError) {
+      toast(nextError instanceof Error ? nextError.message : "Could not update the poster.", "error");
+    } finally {
+      setBusy(null);
     }
   }
 
@@ -595,6 +644,17 @@ export function AdminPage() {
               <button type="button" className="btn btn--ghost btn--sm" onClick={() => void loadSets()} disabled={refreshing}>
                 <RefreshCw size={14} className={refreshing ? "spin" : ""} /> Refresh
               </button>
+              <button
+                type="button"
+                className="btn btn--ghost btn--sm"
+                onClick={() =>
+                  document
+                    .getElementById("admin-artwork")
+                    ?.scrollIntoView({ behavior: "smooth", block: "start" })
+                }
+              >
+                <ImageIcon size={14} /> Artwork
+              </button>
             </div>
           </div>
         </div>
@@ -604,6 +664,19 @@ export function AdminPage() {
 
       <section className="section admin-section">
         <div className="container">
+          <input
+            ref={posterInputRef}
+            type="file"
+            accept="image/*"
+            hidden
+            onChange={(event) => {
+              const file = event.target.files?.[0];
+              const target = posterTarget;
+              if (file && target) void replacePoster(target, file);
+              event.target.value = "";
+            }}
+          />
+
           {demoMode && (
             <div className="admin-demo-notice">
               <AlertTriangle size={19} />
@@ -932,7 +1005,7 @@ export function AdminPage() {
               </button>
             </form>
 
-            <form className="admin-card admin-form" onSubmit={handleAddAssets}>
+            <form className="admin-card admin-form" id="admin-add-files" onSubmit={handleAddAssets}>
               <div className="admin-card-head">
                 <div>
                   <p className="eyebrow">Step 2</p>
@@ -1129,6 +1202,38 @@ export function AdminPage() {
                           </Link>
                           <button
                             type="button"
+                            className="icon-btn"
+                            aria-label={`Replace poster for ${set.title}`}
+                            title="Replace poster"
+                            onClick={() => {
+                              setPosterTarget(set);
+                              posterInputRef.current?.click();
+                            }}
+                            disabled={busy === `${set.id}-poster`}
+                          >
+                            {busy === `${set.id}-poster` ? (
+                              <Loader2 size={15} className="spin" />
+                            ) : (
+                              <ImageIcon size={15} />
+                            )}
+                          </button>
+                          <button
+                            type="button"
+                            className="icon-btn"
+                            aria-label={`Add files to ${set.title}`}
+                            title="Add files"
+                            onClick={() => {
+                              setAssetSetId(set.id);
+                              void loadAssets(set.id);
+                              document
+                                .getElementById("admin-add-files")
+                                ?.scrollIntoView({ behavior: "smooth", block: "start" });
+                            }}
+                          >
+                            <UploadCloud size={15} />
+                          </button>
+                          <button
+                            type="button"
                             className="icon-btn icon-btn--danger"
                             aria-label={`Delete ${set.title}`}
                             onClick={() => void deleteSet(set)}
@@ -1183,6 +1288,10 @@ export function AdminPage() {
                 })}
               </div>
             )}
+          </div>
+
+          <div id="admin-artwork">
+            <SiteArtworkManager />
           </div>
 
           <div className="admin-tips">

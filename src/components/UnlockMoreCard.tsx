@@ -2,6 +2,7 @@ import { type CSSProperties, type MouseEvent } from "react";
 import { ArrowRight, Lock, Sparkles, ShieldCheck } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { useSiteAssets } from "../context/SiteAssetsContext";
 import { BASIC_PRICE_LABEL } from "../lib/config";
 import { useReveal } from "../hooks/useReveal";
 import { POSTER_IMAGES } from "../data/posters";
@@ -37,10 +38,14 @@ export function UnlockMoreCard({
   index = 8,
 }: UnlockMoreCardProps) {
   const { isPatron } = useAuth();
+  const { getImage } = useSiteAssets();
   const navigate = useNavigate();
   const { ref, revealed } = useReveal<HTMLElement>();
 
-  const bgImg = categoryArtworks[category] || POSTER_IMAGES[0];
+  const bgImg = getImage(
+    `section-${category}`,
+    categoryArtworks[category] || POSTER_IMAGES[0],
+  );
 
   const defaultTitles: Record<string, { title: string; sub: string }> = {
     trending: {

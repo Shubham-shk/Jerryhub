@@ -21,6 +21,7 @@ import { StatusPill } from "../components/StatusPill";
 import { PatreonMark } from "../components/PatreonMark";
 import { useAgeGate } from "../context/AgeGateContext";
 import { useAuth } from "../context/AuthContext";
+import { useSiteAssets } from "../context/SiteAssetsContext";
 import { useUI } from "../context/UIContext";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
 import {
@@ -59,6 +60,7 @@ export function AccountPage() {
     setDemoMembership,
   } = useAuth();
   const { openAuthModal, toast } = useUI();
+  const { getImage } = useSiteAssets();
   const { reset: resetAgeGate } = useAgeGate();
   const navigate = useNavigate();
   const [refreshing, setRefreshing] = useState(false);
@@ -135,7 +137,7 @@ export function AccountPage() {
                 </Link>
               </div>
               <div className="account-guest-art" aria-hidden="true">
-                <img src={POSTER_IMAGES[3]} alt="" />
+                <img src={getImage("account-guest", POSTER_IMAGES[3])} alt="" />
                 <span className="account-guest-badge"><ShieldCheck size={22} /></span>
               </div>
             </div>

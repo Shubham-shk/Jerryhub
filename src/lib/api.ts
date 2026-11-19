@@ -6,9 +6,18 @@ import type { AccessLevel, MediaAsset, MediaSet, PatreonConnection, SignedAsset 
 
 const THUMBNAIL_BUCKET = "thumbnails";
 
+/**
+ * True when a stored path is already a full remote URL. Files can be hosted on
+ * a third-party site and pasted into the admin dashboard, so these values are
+ * served as-is instead of being turned into a storage URL or signed link.
+ */
+export function isExternalUrl(value: string | null | undefined): boolean {
+  return Boolean(value && /^https?:\/\//i.test(value));
+}
+
 export function thumbnailUrl(path: string | null | undefined): string {
   if (!path) return "";
-  if (/^https?:\/\//i.test(path) || path.startsWith("/")) return path;
+  if (isExternalUrl(path) || path.startsWith("/")) return path;
   return `${SUPABASE_URL}/storage/v1/object/public/${THUMBNAIL_BUCKET}/${path.replace(/^\//, "")}`;
 }
 
@@ -28,8 +37,12 @@ export async function fetchSiteAssets(): Promise<Record<string, string>> {
 
   return Object.fromEntries(
     (data ?? []).map((row) => {
-      const url = thumbnailUrl(row.image_path as string);
+      const stored = row.image_path as string;
+      const url = thumbnailUrl(stored);
       if (!url) return [row.slot as string, ""];
+      // Only bucket uploads need cache busting. Third-party links are served
+      // exactly as pasted so signed CDN URLs are never altered.
+      if (isExternalUrl(stored)) return [row.slot as string, url];
       const version = row.updated_at ? String(row.updated_at) : "";
       const separator = url.includes("?") ? "&" : "?";
       return [row.slot as string, version ? `${url}${separator}v=${encodeURIComponent(version)}` : url];
@@ -111,6 +124,11 @@ export async function getSignedAssetUrl(
   asset: MediaAsset,
   options: { download?: boolean } = {},
 ): Promise<SignedAsset> {
+  // Third-party hosted files are already public links: no signing required.
+  if (isExternalUrl(asset.storage_path)) {
+    return { asset, url: asset.storage_path, expiresIn: 0 };
+  }
+
   if (DEMO_MODE) {
     if (!asset.demo_url) throw new Error("This demo asset is unavailable.");
     return { asset, url: asset.demo_url, expiresIn: 3600 };
@@ -147,10 +165,25 @@ export async function getSignedAssetUrls(
   assets: MediaAsset[],
 ): Promise<Record<string, string>> {
   if (!assets.length) return {};
+
+  // Split third-party links from private-bucket files. Remote links are used
+  // directly; only the private files need a signed URL from the Edge Function.
+  const external = Object.fromEntries(
+    assets
+      .filter((asset) => isExternalUrl(asset.storage_path))
+      .map((asset) => [asset.id, asset.storage_path]),
+  );
+  const internal = assets.filter((asset) => !isExternalUrl(asset.storage_path));
+
+  if (!internal.length) return external;
+
   if (DEMO_MODE) {
-    return Object.fromEntries(
-      assets.filter((asset) => asset.demo_url).map((asset) => [asset.id, asset.demo_url as string]),
+    const demo = Object.fromEntries(
+      internal
+        .filter((asset) => asset.demo_url)
+        .map((asset) => [asset.id, asset.demo_url as string]),
     );
+    return { ...external, ...demo };
   }
 
   if (!supabase) throw new Error("Supabase is not configured.");
@@ -164,7 +197,7 @@ export async function getSignedAssetUrls(
       Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ assetIds: assets.map((asset) => asset.id) }),
+    body: JSON.stringify({ assetIds: internal.map((asset) => asset.id) }),
   });
 
   const payload = (await response.json().catch(() => ({}))) as {
@@ -176,7 +209,10 @@ export async function getSignedAssetUrls(
     throw new Error(payload.error || "Could not unlock this set. Please try again.");
   }
 
-  return Object.fromEntries(payload.urls.map((item) => [item.assetId, item.url]));
+  return {
+    ...external,
+    ...Object.fromEntries(payload.urls.map((item) => [item.assetId, item.url])),
+  };
 }
 
 export async function downloadAsset(asset: MediaAsset): Promise<void> {

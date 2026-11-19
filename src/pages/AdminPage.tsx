@@ -13,6 +13,7 @@ import {
   Image as ImageIcon,
   KeyRound,
   LayoutDashboard,
+  Link2,
   Loader2,
   Plus,
   RefreshCw,
@@ -31,8 +32,7 @@ import { SiteArtworkManager } from "../components/admin/SiteArtworkManager";
 import { useAuth } from "../context/AuthContext";
 import { useUI } from "../context/UIContext";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
-import { fetchAllMediaSets, fetchSetAssets, thumbnailUrl } from "../lib/api";
-import {
+import { fetchAllMediaSets, fetchSetAssets, isExternalUrl, thumbnailUrl } from "../lib/api";import {
   BASIC_PRICE_LABEL,
   DEMO_MODE,
   FULL_PRICE_LABEL,
@@ -94,6 +94,38 @@ function safeName(name: string): string {
   return name.replace(/[^a-zA-Z0-9._-]+/g, "-").replace(/-+/g, "-");
 }
 
+/** Absolute http(s) links are the only accepted third-party image URLs. */
+function isHttpUrl(value: string): boolean {
+  const trimmed = value.trim();
+  if (!/^https?:\/\//i.test(trimmed)) return false;
+  try {
+    new URL(trimmed);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function fileNameFromUrl(value: string, index: number): string {
+  try {
+    const path = new URL(value).pathname;
+    const name = decodeURIComponent(path.split("/").filter(Boolean).pop() || "");
+    return name || `image-${index + 1}`;
+  } catch {
+    return `image-${index + 1}`;
+  }
+}
+
+/** Guesses the media type from the link extension, falling back to the form. */
+function guessTypeFromUrl(value: string): MediaType | null {
+  const ext = (value.split("?")[0].split("#")[0].split(".").pop() || "").toLowerCase();
+  if (["mp4", "webm", "mov", "m4v", "ogv"].includes(ext)) return "video";
+  if (["png", "jpg", "jpeg", "webp", "gif", "avif", "bmp", "svg"].includes(ext)) return "image";
+  if (ext === "pdf") return "pdf";
+  if (ext === "funscript" || ext === "json") return "funscript";
+  return null;
+}
+
 function typeLabel(type: MediaType): string {
   return typeOptions.find((option) => option.value === type)?.label ?? type;
 }
@@ -131,6 +163,7 @@ export function AdminPage() {
     duration: "",
   });
   const [thumbnail, setThumbnail] = useState<File | null>(null);
+  const [thumbnailLink, setThumbnailLink] = useState("");
   const [creating, setCreating] = useState(false);
   const thumbInputRef = useRef<HTMLInputElement | null>(null);
   const posterInputRef = useRef<HTMLInputElement | null>(null);
@@ -139,6 +172,7 @@ export function AdminPage() {
   const [assetSetId, setAssetSetId] = useState("");
   const [assetType, setAssetType] = useState<MediaType>("video");
   const [assetFiles, setAssetFiles] = useState<File[]>([]);
+  const [assetLinks, setAssetLinks] = useState("");
   const [assetDuration, setAssetDuration] = useState("");
   const [uploading, setUploading] = useState(false);
   const assetInputRef = useRef<HTMLInputElement | null>(null);
@@ -219,8 +253,14 @@ export function AdminPage() {
       toast("Give the set a title.", "error");
       return;
     }
-    if (!thumbnail) {
-      toast("Choose a thumbnail image.", "error");
+
+    const thumbnailLinkValue = thumbnailLink.trim();
+    if (!thumbnail && !thumbnailLinkValue) {
+      toast("Choose a thumbnail image or paste an image link.", "error");
+      return;
+    }
+    if (thumbnailLinkValue && !isHttpUrl(thumbnailLinkValue)) {
+      toast("Thumbnail link must start with http:// or https://.", "error");
       return;
     }
 
@@ -228,12 +268,16 @@ export function AdminPage() {
     const client = requireSupabase();
     let uploadedPath: string | null = null;
     try {
-      const path = `sets/${crypto.randomUUID()}-${safeName(thumbnail.name)}`;
-      const upload = await client.storage
-        .from("thumbnails")
-        .upload(path, thumbnail, { cacheControl: "3600", upsert: false });
-      if (upload.error) throw upload.error;
-      uploadedPath = path;
+      let thumbnailPath = thumbnailLinkValue;
+      if (!thumbnailPath) {
+        const path = `sets/${crypto.randomUUID()}-${safeName((thumbnail as File).name)}`;
+        const upload = await client.storage
+          .from("thumbnails")
+          .upload(path, thumbnail as File, { cacheControl: "3600", upsert: false });
+        if (upload.error) throw upload.error;
+        uploadedPath = path;
+        thumbnailPath = path;
+      }
 
       const slugBase = slugify(form.title) || "untitled";
       const slug = `${slugBase}-${Math.random().toString(36).slice(2, 6)}`;
@@ -243,7 +287,7 @@ export function AdminPage() {
         slug,
         title: form.title.trim(),
         description: form.description.trim() || null,
-        thumbnail_path: path,
+        thumbnail_path: thumbnailPath,
         primary_type: form.primary_type,
         category: form.category,
         access_level: form.access_level,
@@ -267,6 +311,7 @@ export function AdminPage() {
         duration: "",
       });
       setThumbnail(null);
+      setThumbnailLink("");
       if (thumbInputRef.current) thumbInputRef.current.value = "";
       await loadSets();
     } catch (nextError) {
@@ -308,7 +353,7 @@ export function AdminPage() {
         throw update.error;
       }
 
-      if (set.thumbnail_path && !/^https?:\/\//i.test(set.thumbnail_path)) {
+      if (set.thumbnail_path && !isExternalUrl(set.thumbnail_path)) {
         await client.storage.from("thumbnails").remove([set.thumbnail_path]);
       }
 
@@ -320,6 +365,50 @@ export function AdminPage() {
       toast("Poster updated.", "success");
     } catch (nextError) {
       toast(nextError instanceof Error ? nextError.message : "Could not update the poster.", "error");
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  /** Points an existing set at an image hosted on a third-party site. */
+  async function replacePosterWithUrl(set: MediaSet) {
+    if (!requireLive()) return;
+    const answer = window.prompt(
+      `Paste an image link for “${set.title}”`,
+      isExternalUrl(set.thumbnail_path) ? set.thumbnail_path : "",
+    );
+    if (answer === null) return;
+
+    const url = answer.trim();
+    if (!isHttpUrl(url)) {
+      toast("Poster link must start with http:// or https://.", "error");
+      return;
+    }
+
+    setBusy(`${set.id}-poster`);
+    const client = requireSupabase();
+    try {
+      const update = await client
+        .from("media_sets")
+        .update({ thumbnail_path: url })
+        .eq("id", set.id);
+      if (update.error) throw update.error;
+
+      if (set.thumbnail_path && !isExternalUrl(set.thumbnail_path)) {
+        await client.storage.from("thumbnails").remove([set.thumbnail_path]);
+      }
+
+      setSets((current) =>
+        current.map((item) =>
+          item.id === set.id ? { ...item, thumbnail_path: url } : item,
+        ),
+      );
+      toast("Poster updated from link.", "success");
+    } catch (nextError) {
+      toast(
+        nextError instanceof Error ? nextError.message : "Could not update the poster.",
+        "error",
+      );
     } finally {
       setBusy(null);
     }
@@ -476,10 +565,13 @@ export function AdminPage() {
     setBusy(`${set.id}-delete`);
     try {
       const assets = adminAssets[set.id] ?? (await fetchSetAssets(set.id));
-      if (assets.length) {
-        await client.storage.from("premium").remove(assets.map((asset) => asset.storage_path));
+      const storedPaths = assets
+        .map((asset) => asset.storage_path)
+        .filter((path) => !isExternalUrl(path));
+      if (storedPaths.length) {
+        await client.storage.from("premium").remove(storedPaths);
       }
-      if (set.thumbnail_path && !/^https?:\/\//i.test(set.thumbnail_path)) {
+      if (set.thumbnail_path && !isExternalUrl(set.thumbnail_path)) {
         await client.storage.from("thumbnails").remove([set.thumbnail_path]);
       }
       const remove = await client.from("media_sets").delete().eq("id", set.id);
@@ -501,8 +593,18 @@ export function AdminPage() {
       toast("Choose a set.", "error");
       return;
     }
-    if (!assetFiles.length) {
-      toast("Choose at least one file.", "error");
+
+    const links = assetLinks
+      .split(/\r?\n/)
+      .map((line) => line.trim())
+      .filter(Boolean);
+    if (!assetFiles.length && !links.length) {
+      toast("Choose files or paste at least one image link.", "error");
+      return;
+    }
+    const invalidLink = links.find((link) => !isHttpUrl(link));
+    if (invalidLink) {
+      toast(`“${invalidLink.slice(0, 60)}” is not a valid http(s) link.`, "error");
       return;
     }
 
@@ -511,6 +613,7 @@ export function AdminPage() {
     try {
       const existing = await fetchSetAssets(assetSetId);
       let sort = existing.length;
+
       for (const file of assetFiles) {
         const path = `sets/${assetSetId}/${crypto.randomUUID()}-${safeName(file.name)}`;
         const upload = await client.storage
@@ -531,8 +634,28 @@ export function AdminPage() {
         if (insert.error) throw insert.error;
         sort += 1;
       }
-      toast(`${assetFiles.length} file${assetFiles.length === 1 ? "" : "s"} uploaded.`, "success");
+
+      // Third-party links are stored as absolute URLs. The player serves them
+      // directly instead of asking the Edge Function to sign them.
+      for (const [index, link] of links.entries()) {
+        const insert = await client.from("media_assets").insert({
+          set_id: assetSetId,
+          type: guessTypeFromUrl(link) ?? assetType,
+          storage_path: link,
+          file_name: fileNameFromUrl(link, index),
+          mime_type: null,
+          size_bytes: null,
+          duration_seconds: assetDuration ? Number(assetDuration) : null,
+          sort_order: sort,
+        });
+        if (insert.error) throw insert.error;
+        sort += 1;
+      }
+
+      const added = assetFiles.length + links.length;
+      toast(`${added} file${added === 1 ? "" : "s"} added.`, "success");
       setAssetFiles([]);
+      setAssetLinks("");
       setAssetDuration("");
       if (assetInputRef.current) assetInputRef.current.value = "";
       setAdminAssets((current) => {
@@ -554,7 +677,9 @@ export function AdminPage() {
     const client = requireSupabase();
     setBusy(`${asset.id}-delete`);
     try {
-      await client.storage.from("premium").remove([asset.storage_path]);
+      if (!isExternalUrl(asset.storage_path)) {
+        await client.storage.from("premium").remove([asset.storage_path]);
+      }
       const remove = await client.from("media_assets").delete().eq("id", asset.id);
       if (remove.error) throw remove.error;
       setAdminAssets((current) => ({
@@ -970,10 +1095,31 @@ export function AdminPage() {
                     ref={thumbInputRef}
                     type="file"
                     accept="image/*"
-                    onChange={(event) => setThumbnail(event.target.files?.[0] ?? null)}
+                    onChange={(event) => {
+                      const file = event.target.files?.[0] ?? null;
+                      setThumbnail(file);
+                      if (file) setThumbnailLink("");
+                    }}
                     disabled={creating}
                   />
                 </span>
+              </label>
+
+              <label className="field">
+                <span>…or paste a thumbnail link</span>
+                <input
+                  type="url"
+                  value={thumbnailLink}
+                  onChange={(event) => {
+                    setThumbnailLink(event.target.value);
+                    if (event.target.value.trim()) {
+                      setThumbnail(null);
+                      if (thumbInputRef.current) thumbInputRef.current.value = "";
+                    }
+                  }}
+                  placeholder="https://example.com/poster.png"
+                  disabled={creating}
+                />
               </label>
 
               <div className="toggle-row">
@@ -1082,15 +1228,26 @@ export function AdminPage() {
                 </span>
               </label>
 
+              <label className="field">
+                <span>…or paste file links (one per line)</span>
+                <textarea
+                  rows={4}
+                  value={assetLinks}
+                  onChange={(event) => setAssetLinks(event.target.value)}
+                  placeholder={"https://example.com/image-1.png\nhttps://example.com/image-2.png"}
+                  disabled={uploading}
+                />
+              </label>
+
               <div className="admin-upload-note">
                 <KeyRound size={14} />
-                Uploads go to the private <code>premium</code> bucket. Only active patrons can
-                request signed URLs.
+                Files go to the private <code>premium</code> bucket. Pasted links are stored as
+                public third-party URLs and skip signing — host them anywhere and paste the link.
               </div>
 
               <button type="submit" className="btn btn--primary btn--block" disabled={uploading || DEMO_MODE}>
                 {uploading ? <Loader2 size={16} className="spin" /> : <UploadCloud size={16} />}
-                Upload files
+                Add files &amp; links
               </button>
             </form>
           </div>
@@ -1216,6 +1373,16 @@ export function AdminPage() {
                             ) : (
                               <ImageIcon size={15} />
                             )}
+                          </button>
+                          <button
+                            type="button"
+                            className="icon-btn"
+                            aria-label={`Set poster link for ${set.title}`}
+                            title="Poster from link"
+                            onClick={() => void replacePosterWithUrl(set)}
+                            disabled={busy === `${set.id}-poster`}
+                          >
+                            <Link2 size={15} />
                           </button>
                           <button
                             type="button"

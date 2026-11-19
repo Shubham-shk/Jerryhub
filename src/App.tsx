@@ -1,13 +1,14 @@
-import { useEffect } from "react";
+import { lazy, Suspense, useEffect } from "react";
 import { Route, Routes, useLocation } from "react-router-dom";
+import { Loader2 } from "lucide-react";
 import { AgeGate } from "./components/AgeGate";
 import { useAgeGate } from "./context/AgeGateContext";
+import { useAuth } from "./context/AuthContext";
 import { AuthPromptModal } from "./components/AuthPromptModal";
 import { Footer } from "./components/Footer";
 import { Navbar } from "./components/Navbar";
 import { ToastViewport } from "./components/ToastViewport";
 import { AccountPage } from "./pages/AccountPage";
-import { AdminPage } from "./pages/AdminPage";
 import { AuthCallbackPage } from "./pages/AuthCallbackPage";
 import { BrowsePage } from "./pages/BrowsePage";
 import { ContentDetailsPage } from "./pages/ContentDetailsPage";
@@ -15,6 +16,15 @@ import { FAQPage } from "./pages/FAQPage";
 import { LandingPage } from "./pages/LandingPage";
 import { LegalPage } from "./pages/LegalPage";
 import { NotFoundPage } from "./pages/NotFoundPage";
+
+/**
+ * The admin dashboard lives in its own JS chunk. Non-admins never download it
+ * and the route is not registered for them, so /admin behaves like any other
+ * unknown URL (404) instead of advertising a restricted area.
+ */
+const AdminPage = lazy(() =>
+  import("./pages/AdminPage").then((module) => ({ default: module.AdminPage })),
+);
 
 function ScrollToTop() {
   const { pathname, hash } = useLocation();
@@ -58,10 +68,15 @@ function ScrollToTop() {
 export default function App() {
   const location = useLocation();
   const { verified } = useAgeGate();
+  const { isAdmin, loading: authLoading } = useAuth();
   const minimal = location.pathname.startsWith("/auth/callback");
   // Legal pages must stay readable before verification. Everything else is gated.
   const legal = location.pathname.startsWith("/legal/");
   const unlocked = verified || legal;
+  const onAdminPath = location.pathname === "/admin" || location.pathname.startsWith("/admin/");
+  // Wait for the session before deciding /admin is unknown, so an admin who
+  // refreshes the page does not see a 404 flash.
+  const resolvingAdmin = onAdminPath && authLoading;
 
   return (
     <div className="app">
@@ -71,20 +86,36 @@ export default function App() {
           {!minimal && <Navbar />}
 
           <main className={minimal ? "main main--minimal" : "main"}>
-            <Routes>
-              <Route path="/" element={<LandingPage />} />
-              <Route path="/browse" element={<BrowsePage mode="all" />} />
-              <Route path="/trending" element={<BrowsePage mode="trending" />} />
-              <Route path="/newest" element={<BrowsePage mode="newest" />} />
-              <Route path="/content/:slug" element={<ContentDetailsPage />} />
-              <Route path="/release/:slug" element={<ContentDetailsPage />} />
-              <Route path="/faq" element={<FAQPage />} />
-              <Route path="/account" element={<AccountPage />} />
-              <Route path="/admin" element={<AdminPage />} />
-              <Route path="/auth/callback" element={<AuthCallbackPage />} />
-              <Route path="/legal/:slug" element={<LegalPage />} />
-              <Route path="*" element={<NotFoundPage />} />
-            </Routes>
+            {resolvingAdmin ? (
+              <div className="admin-gate">
+                <Loader2 size={28} className="spin" />
+                <p>Checking access…</p>
+              </div>
+            ) : (
+              <Suspense
+                fallback={
+                  <div className="admin-gate">
+                    <Loader2 size={28} className="spin" />
+                    <p>Loading…</p>
+                  </div>
+                }
+              >
+                <Routes>
+                  <Route path="/" element={<LandingPage />} />
+                  <Route path="/browse" element={<BrowsePage mode="all" />} />
+                  <Route path="/trending" element={<BrowsePage mode="trending" />} />
+                  <Route path="/newest" element={<BrowsePage mode="newest" />} />
+                  <Route path="/content/:slug" element={<ContentDetailsPage />} />
+                  <Route path="/release/:slug" element={<ContentDetailsPage />} />
+                  <Route path="/faq" element={<FAQPage />} />
+                  <Route path="/account" element={<AccountPage />} />
+                  {isAdmin && <Route path="/admin" element={<AdminPage />} />}
+                  <Route path="/auth/callback" element={<AuthCallbackPage />} />
+                  <Route path="/legal/:slug" element={<LegalPage />} />
+                  <Route path="*" element={<NotFoundPage />} />
+                </Routes>
+              </Suspense>
+            )}
           </main>
 
           {!minimal && <Footer />}

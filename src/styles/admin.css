@@ -486,7 +486,7 @@
 .admin-member-head,
 .admin-member-row {
   display: grid;
-  grid-template-columns: minmax(0, 1.6fr) 0.7fr 0.8fr minmax(0, 1fr) 0.9fr;
+  grid-template-columns: minmax(0, 1.6fr) 0.7fr 0.8fr minmax(0, 1fr) minmax(0, 1.25fr);
   align-items: center;
   gap: 10px;
   padding: 10px 12px;
@@ -537,6 +537,65 @@
   background: #101014;
   color: #fff;
   font-size: 9.5px;
+}
+.admin-member-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: #101014;
+  color: var(--muted-2);
+}
+.admin-member-search input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  color: #fff;
+  font-size: 10.5px;
+  outline: none;
+}
+.admin-member-search input::placeholder {
+  color: var(--muted-2);
+}
+.admin-member-change {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.admin-member-change select {
+  flex: 1;
+  min-width: 0;
+}
+.admin-member-admin {
+  display: inline-grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #101014;
+  color: var(--muted-2);
+  cursor: pointer;
+  transition: color 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+}
+.admin-member-admin:hover:not(:disabled) {
+  border-color: rgba(255, 255, 255, 0.25);
+  color: #fff;
+}
+.admin-member-admin.is-admin {
+  border-color: rgba(255, 45, 120, 0.35);
+  background: rgba(255, 45, 120, 0.08);
+  color: #ff8ab5;
+}
+.admin-member-admin:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 .admin-access-pill {
   display: inline-flex;

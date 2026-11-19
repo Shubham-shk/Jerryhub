@@ -16,7 +16,9 @@ import {
   Loader2,
   Plus,
   RefreshCw,
+  Search,
   ShieldCheck,
+  ShieldOff,
   Sparkles,
   Trash2,
   UploadCloud,
@@ -113,6 +115,7 @@ export function AdminPage() {
   const [adminAssets, setAdminAssets] = useState<Record<string, MediaAsset[]>>({});
   const [busy, setBusy] = useState<string | null>(null);
   const [members, setMembers] = useState<Profile[]>([]);
+  const [memberQuery, setMemberQuery] = useState("");
   const [loadingMembers, setLoadingMembers] = useState(false);
   const [events, setEvents] = useState<MembershipEvent[]>([]);
 
@@ -362,6 +365,39 @@ export function AdminPage() {
     }
   }
 
+  async function toggleAdmin(member: Profile) {
+    if (!requireLive()) return;
+    if (member.id === profile?.id) {
+      toast("You cannot change your own admin access.", "error");
+      return;
+    }
+    const next = !member.is_admin;
+    if (
+      !window.confirm(
+        `${next ? "Grant" : "Revoke"} admin access for ${member.email ?? member.id}?`,
+      )
+    ) {
+      return;
+    }
+    const client = requireSupabase();
+    setBusy(`${member.id}-admin`);
+    try {
+      const update = await client
+        .from("profiles")
+        .update({ is_admin: next })
+        .eq("id", member.id);
+      if (update.error) throw update.error;
+      setMembers((current) =>
+        current.map((item) => (item.id === member.id ? { ...item, is_admin: next } : item)),
+      );
+      toast(next ? "Admin access granted." : "Admin access revoked.", "success");
+    } catch (nextError) {
+      toast(nextError instanceof Error ? nextError.message : "Update failed.", "error");
+    } finally {
+      setBusy(null);
+    }
+  }
+
   async function toggleFlag(set: MediaSet, field: "is_trending" | "is_new") {
     if (!requireLive()) return;
     const client = requireSupabase();
@@ -534,6 +570,15 @@ export function AdminPage() {
   const basicMembers = members.filter((member) => memberLevel(member) === "basic").length;
   const fullMembers = members.filter((member) => memberLevel(member) === "full").length;
 
+  const memberSearch = memberQuery.trim().toLowerCase();
+  const visibleMembers = memberSearch
+    ? members.filter((member) =>
+        [member.full_name, member.email, member.id, member.patreon_user_id]
+          .filter(Boolean)
+          .some((value) => String(value).toLowerCase().includes(memberSearch)),
+      )
+    : members;
+
   return (
     <>
       <section className="page-hero page-hero--admin">
@@ -587,9 +632,19 @@ export function AdminPage() {
                 </div>
                 <span className="admin-card-badge"><Users size={14} /> {members.length} profiles</span>
               </div>
+              <label className="admin-member-search">
+                <Search size={14} />
+                <input
+                  type="search"
+                  value={memberQuery}
+                  onChange={(event) => setMemberQuery(event.target.value)}
+                  placeholder="Search by name, email, Patreon ID or user ID…"
+                  aria-label="Search members"
+                />
+              </label>
               {loadingMembers ? (
                 <div className="admin-loading"><Loader2 size={20} className="spin" /> Loading members…</div>
-              ) : members.length ? (
+              ) : visibleMembers.length ? (
                 <div className="admin-member-list">
                   <div className="admin-member-head">
                     <span>Member</span>
@@ -598,7 +653,7 @@ export function AdminPage() {
                     <span>Patreon tier</span>
                     <span>Change</span>
                   </div>
-                  {members.map((member) => {
+                  {visibleMembers.map((member) => {
                     const level = memberLevel(member);
                     return (
                       <div className="admin-member-row" key={member.id}>
@@ -615,27 +670,61 @@ export function AdminPage() {
                             ? member.entitled_tier_ids.join(", ")
                             : "—"}
                         </code>
-                        <select
-                          value={level === "basic" ? "basic" : level === "full" ? "full" : "public"}
-                          onChange={(event) =>
-                            void updateMemberAccess(
-                              member,
-                              event.target.value as "basic" | "full" | "public",
-                            )
-                          }
-                          disabled={DEMO_MODE || busy === `${member.id}-access`}
-                          aria-label={`Change access for ${member.email ?? member.id}`}
-                        >
-                          <option value="public">Public</option>
-                          <option value="basic">Basic Access</option>
-                          <option value="full">Full Access</option>
-                        </select>
+                        <div className="admin-member-change">
+                          <select
+                            value={level === "basic" ? "basic" : level === "full" ? "full" : "public"}
+                            onChange={(event) =>
+                              void updateMemberAccess(
+                                member,
+                                event.target.value as "basic" | "full" | "public",
+                              )
+                            }
+                            disabled={DEMO_MODE || busy === `${member.id}-access`}
+                            aria-label={`Change access for ${member.email ?? member.id}`}
+                          >
+                            <option value="public">Public</option>
+                            <option value="basic">Basic Access</option>
+                            <option value="full">Full Access</option>
+                          </select>
+                          <button
+                            type="button"
+                            className={`admin-member-admin${member.is_admin ? " is-admin" : ""}`}
+                            onClick={() => void toggleAdmin(member)}
+                            disabled={
+                              DEMO_MODE ||
+                              busy === `${member.id}-admin` ||
+                              member.id === profile?.id
+                            }
+                            title={
+                              member.id === profile?.id
+                                ? "You cannot change your own admin access"
+                                : member.is_admin
+                                  ? "Revoke admin access"
+                                  : "Grant admin access"
+                            }
+                            aria-label={
+                              member.is_admin
+                                ? `Revoke admin access for ${member.email ?? member.id}`
+                                : `Grant admin access for ${member.email ?? member.id}`
+                            }
+                          >
+                            {busy === `${member.id}-admin` ? (
+                              <Loader2 size={14} className="spin" />
+                            ) : member.is_admin ? (
+                              <ShieldCheck size={14} />
+                            ) : (
+                              <ShieldOff size={14} />
+                            )}
+                          </button>
+                        </div>
                       </div>
                     );
                   })}
                 </div>
               ) : (
-                <p className="admin-assets-empty">No profiles loaded.</p>
+                <p className="admin-assets-empty">
+                  {members.length ? "No members match your search." : "No profiles loaded."}
+                </p>
               )}
             </div>
 

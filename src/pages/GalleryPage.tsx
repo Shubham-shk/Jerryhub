@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   AlertTriangle,
   ArrowLeft,
+  Check,
   ChevronLeft,
   ChevronRight,
   Download,
@@ -421,36 +422,20 @@ export function GalleryPage() {
 
   return (
     <div className="gallery-page">
-      <header className="gallery-header">
-        <div className="container gallery-header-inner">
-          <nav className="gallery-breadcrumb" aria-label="Breadcrumb">
-            <Link to="/browse" className="gallery-back">
-              <ArrowLeft size={15} /> All sets
-            </Link>
-            <span className="gallery-breadcrumb-sep">/</span>
-            <span className="gallery-breadcrumb-current">{set.title}</span>
-          </nav>
-
-          <div className="gallery-title-row">
-            <div className="gallery-title-copy">
-              <p className="eyebrow"><Images size={14} /> Image set</p>
-              <h1>{set.title}</h1>
-              <div className="gallery-meta">
-                <span>
-                  {assetsLoading
-                    ? "Loading images…"
-                    : `${imageCount} ${imageCount === 1 ? "image" : "images"}`}
-                </span>
-                <span><Maximize2 size={12} /> Original resolution</span>
-                <span className="gallery-meta-access">{accessLabel(set.access_level)}</span>
-              </div>
-            </div>
-            <div className="gallery-header-actions">
-              <Link to={`/content/${set.slug}`} className="btn btn--ghost btn--sm">
-                Release details
-              </Link>
-            </div>
-          </div>
+      <header className="gallery-topbar">
+        <div className="container gallery-topbar-inner">
+          <Link to="/browse" className="gallery-back">
+            <ArrowLeft size={16} /> All sets
+          </Link>
+          <button
+            type="button"
+            className="gallery-premium"
+            title="Only members with access to this set can view this page."
+            onClick={() => toast("Premium access confirmed for your account.", "success")}
+          >
+            <Check size={14} strokeWidth={3} />{" "}
+            {set.access_level === "full" ? "Premium Access" : accessLabel(set.access_level)}
+          </button>
         </div>
       </header>
 

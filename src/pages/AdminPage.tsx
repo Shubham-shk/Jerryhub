@@ -12,6 +12,7 @@ import {
   History,
   Image as ImageIcon,
   KeyRound,
+  Layers,
   LayoutDashboard,
   Link2,
   Loader2,
@@ -28,7 +29,7 @@ import {
 } from "lucide-react";
 import { MembershipBanner } from "../components/MembershipBanner";
 import { StatusPill } from "../components/StatusPill";
-import { SiteArtworkManager } from "../components/admin/SiteArtworkManager";
+import { ContentManagerOverview } from "../components/admin/ContentManagerOverview";
 import { useAuth } from "../context/AuthContext";
 import { useUI } from "../context/UIContext";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
@@ -60,10 +61,10 @@ const typeOptions: Array<{ value: MediaType; label: string }> = [
 ];
 
 const categoryOptions: Array<{ value: MediaCategory; label: string }> = [
-  { value: "animation", label: "Newest Uploads (animation)" },
-  { value: "arts", label: "Exclusive Arts & Videos" },
+  { value: "animation", label: "Animation" },
+  { value: "arts", label: "Arts & video" },
   { value: "games", label: "2D Games" },
-  { value: "comics", label: "Manga + Comics" },
+  { value: "comics", label: "Comics" },
 ];
 
 const accessOptions: Array<{ value: AccessLevel; label: string }> = [
@@ -761,25 +762,22 @@ export function AdminPage() {
             <div>
               <p className="eyebrow"><LayoutDashboard size={14} /> Admin dashboard</p>
               <h1>Library control room</h1>
-              <p>Upload media sets, add files and curate what appears on the homepage.</p>
+              <p>Manage reusable sets, independent packs, media sets and member access.</p>
             </div>
             <div className="admin-hero-user">
               <StatusPill status={profile?.membership_status ?? "unknown"} />
               <span>{profile?.email}</span>
-              <button type="button" className="btn btn--ghost btn--sm" onClick={() => void loadSets()} disabled={refreshing}>
-                <RefreshCw size={14} className={refreshing ? "spin" : ""} /> Refresh
-              </button>
               <button
                 type="button"
                 className="btn btn--ghost btn--sm"
-                onClick={() =>
-                  document
-                    .getElementById("admin-artwork")
-                    ?.scrollIntoView({ behavior: "smooth", block: "start" })
-                }
+                onClick={() => void loadSets()}
+                disabled={refreshing}
               >
-                <ImageIcon size={14} /> Artwork
+                <RefreshCw size={14} className={refreshing ? "spin" : ""} /> Refresh
               </button>
+              <Link to="/admin/sets" className="btn btn--ghost btn--sm">
+                <Layers size={14} /> Sets &amp; packs
+              </Link>
             </div>
           </div>
         </div>
@@ -820,6 +818,8 @@ export function AdminPage() {
             <div><span className="admin-stat-icon"><ShieldCheck size={18} /></span><strong>{basicMembers}</strong><span>Basic members</span></div>
             <div><span className="admin-stat-icon"><ShieldCheck size={18} /></span><strong>{fullMembers}</strong><span>Full members</span></div>
           </div>
+
+          <ContentManagerOverview />
 
           <div className="admin-members-grid">
             <div className="admin-card admin-members">
@@ -1035,7 +1035,7 @@ export function AdminPage() {
               </label>
 
               <label className="field">
-                <span>Homepage collection</span>
+                <span>Library category</span>
                 <select
                   value={form.category}
                   onChange={(event) => setForm({ ...form, category: event.target.value as MediaCategory })}
@@ -1455,10 +1455,6 @@ export function AdminPage() {
                 })}
               </div>
             )}
-          </div>
-
-          <div id="admin-artwork">
-            <SiteArtworkManager />
           </div>
 
           <div className="admin-tips">

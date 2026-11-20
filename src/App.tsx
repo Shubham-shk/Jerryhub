@@ -26,6 +26,31 @@ const AdminPage = lazy(() =>
   import("./pages/AdminPage").then((module) => ({ default: module.AdminPage })),
 );
 
+/**
+ * Sets & Packs CMS. These pages are also admin-only and lazy-loaded so regular
+ * visitors never download the management bundle.
+ */
+const AdminSetsPage = lazy(() =>
+  import("./pages/admin/ContentManagerPages").then((module) => ({
+    default: module.AdminSetsPage,
+  })),
+);
+const AdminSetPage = lazy(() =>
+  import("./pages/admin/ContentManagerPages").then((module) => ({
+    default: module.AdminSetPage,
+  })),
+);
+const AdminPacksPage = lazy(() =>
+  import("./pages/admin/ContentManagerPages").then((module) => ({
+    default: module.AdminPacksPage,
+  })),
+);
+const AdminPackPage = lazy(() =>
+  import("./pages/admin/ContentManagerPages").then((module) => ({
+    default: module.AdminPackPage,
+  })),
+);
+
 function ScrollToTop() {
   const { pathname, hash } = useLocation();
 
@@ -110,6 +135,10 @@ export default function App() {
                   <Route path="/faq" element={<FAQPage />} />
                   <Route path="/account" element={<AccountPage />} />
                   {isAdmin && <Route path="/admin" element={<AdminPage />} />}
+                  {isAdmin && <Route path="/admin/sets" element={<AdminSetsPage />} />}
+                  {isAdmin && <Route path="/admin/sets/:setId" element={<AdminSetPage />} />}
+                  {isAdmin && <Route path="/admin/packs" element={<AdminPacksPage />} />}
+                  {isAdmin && <Route path="/admin/packs/:packId" element={<AdminPackPage />} />}
                   <Route path="/auth/callback" element={<AuthCallbackPage />} />
                   <Route path="/legal/:slug" element={<LegalPage />} />
                   <Route path="*" element={<NotFoundPage />} />

@@ -8,8 +8,6 @@ import {
 } from "react";
 import {
   AlertTriangle,
-  ChevronLeft,
-  ChevronRight,
   Download,
   ExternalLink,
   FileText,
@@ -258,101 +256,6 @@ function VideoPlayer({
   );
 }
 
-function ImageGallery({
-  images,
-  urls,
-  activeId,
-  onChange,
-  onDownload,
-  downloadingId,
-}: {
-  images: MediaAsset[];
-  urls: Record<string, string>;
-  activeId: string | null;
-  onChange: (id: string) => void;
-  onDownload: (asset: MediaAsset) => void;
-  downloadingId: string | null;
-}) {
-  const index = Math.max(0, images.findIndex((image) => image.id === activeId));
-  const current = images[index];
-  const src = current ? urls[current.id] : undefined;
-  const stripRef = useRef<HTMLDivElement | null>(null);
-
-  const go = useCallback(
-    (direction: -1 | 1) => {
-      const next = (index + direction + images.length) % images.length;
-      onChange(images[next].id);
-    },
-    [images, index, onChange],
-  );
-
-  useEffect(() => {
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key === "ArrowRight") go(1);
-      if (event.key === "ArrowLeft") go(-1);
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [go]);
-
-  useEffect(() => {
-    const strip = stripRef.current;
-    const child = strip?.children[index] as HTMLElement | undefined;
-    child?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
-  }, [index]);
-
-  if (!current) return null;
-
-  return (
-    <div className="gallery">
-      <div className="gallery-stage">
-        {src ? (
-          <img src={src} alt={current.file_name} className="gallery-img" />
-        ) : (
-          <div className="gallery-loading"><Loader2 size={28} className="spin" /></div>
-        )}
-        {images.length > 1 && (
-          <>
-            <button type="button" className="gallery-arrow gallery-arrow--left" onClick={() => go(-1)} aria-label="Previous image">
-              <ChevronLeft size={24} />
-            </button>
-            <button type="button" className="gallery-arrow gallery-arrow--right" onClick={() => go(1)} aria-label="Next image">
-              <ChevronRight size={24} />
-            </button>
-          </>
-        )}
-        <div className="gallery-topline">
-          <span>{index + 1} / {images.length}</span>
-          <button
-            type="button"
-            className="gallery-download"
-            onClick={() => onDownload(current)}
-            aria-label="Download this image"
-          >
-            {downloadingId === current.id ? <Loader2 size={15} className="spin" /> : <Download size={15} />}
-          </button>
-        </div>
-      </div>
-
-      {images.length > 1 && (
-        <div className="gallery-strip" ref={stripRef}>
-          {images.map((image, imageIndex) => (
-            <button
-              key={image.id}
-              type="button"
-              className={`gallery-thumb${image.id === activeId ? " is-active" : ""}`}
-              onClick={() => onChange(image.id)}
-              aria-label={`View image ${imageIndex + 1}`}
-            >
-              <img src={urls[image.id] ?? thumbnailUrl(null)} alt="" />
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
 export function PlayerModal({ set, onClose }: { set: MediaSet | null; onClose: () => void }) {
   const { accessLevel, profile, demoMode } = useAuth();
   const { toast } = useUI();
@@ -396,6 +299,8 @@ export function PlayerModal({ set, onClose }: { set: MediaSet | null; onClose: (
         setAssets(nextAssets);
         const first =
           nextAssets.find((asset) => asset.type === "video") ??
+          nextAssets.find((asset) => asset.type === "pdf") ??
+          nextAssets.find((asset) => asset.type === "funscript") ??
           nextAssets.find((asset) => asset.type === "image") ??
           nextAssets[0];
         setActiveId(first?.id ?? null);
@@ -440,7 +345,6 @@ export function PlayerModal({ set, onClose }: { set: MediaSet | null; onClose: (
   }, [set, onClose]);
 
   const videos = useMemo(() => assets.filter((asset) => asset.type === "video"), [assets]);
-  const images = useMemo(() => assets.filter((asset) => asset.type === "image"), [assets]);
   const pdfs = useMemo(() => assets.filter((asset) => asset.type === "pdf"), [assets]);
   const funscripts = useMemo(() => assets.filter((asset) => asset.type === "funscript"), [assets]);
 
@@ -457,9 +361,6 @@ export function PlayerModal({ set, onClose }: { set: MediaSet | null; onClose: (
     videos.forEach((asset, index) => {
       items.push({ key: asset.id, type: "video", label: `Vid ${index + 1}`, sub: formatBytes(asset.size_bytes), asset });
     });
-    images.forEach((asset, index) => {
-      items.push({ key: asset.id, type: "image", label: `Image ${index + 1}`, sub: formatBytes(asset.size_bytes), asset });
-    });
     pdfs.forEach((asset, index) => {
       items.push({ key: asset.id, type: "pdf", label: `PDF ${index + 1}`, sub: formatBytes(asset.size_bytes), asset });
     });
@@ -467,7 +368,7 @@ export function PlayerModal({ set, onClose }: { set: MediaSet | null; onClose: (
       items.push({ key: asset.id, type: "funscript", label: `Script ${index + 1}`, sub: formatBytes(asset.size_bytes), asset });
     });
     return items;
-  }, [videos, images, pdfs, funscripts]);
+  }, [videos, pdfs, funscripts]);
 
   async function handleDownload(asset: MediaAsset) {
     setDownloadingId(asset.id);
@@ -577,17 +478,6 @@ export function PlayerModal({ set, onClose }: { set: MediaSet | null; onClose: (
                 poster={poster}
                 title={set.title}
                 demo={DEMO_MODE || demoMode}
-              />
-            )}
-
-            {!stageLoading && !error && activeAsset && activeType === "image" && (
-              <ImageGallery
-                images={images}
-                urls={urls}
-                activeId={activeAsset.id}
-                onChange={setActiveId}
-                onDownload={handleDownload}
-                downloadingId={downloadingId}
               />
             )}
 

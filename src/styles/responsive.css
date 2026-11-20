@@ -363,13 +363,6 @@
     width: 34px;
     padding: 0;
   }
-  .gallery-strip {
-    padding: 6px;
-  }
-  .gallery-thumb {
-    width: 58px;
-    height: 38px;
-  }
   .auth-callback-card {
     padding: 28px 22px;
   }
@@ -636,10 +629,6 @@
   .video-big-play {
     width: 62px;
     height: 62px;
-  }
-  .gallery-arrow {
-    width: 36px;
-    height: 36px;
   }
   .funscript-stage {
     padding: 22px;

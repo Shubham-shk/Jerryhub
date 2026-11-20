@@ -5,6 +5,7 @@ import { normalizeAccessLevel } from "./access";
 import type { AccessLevel, MediaAsset, MediaSet, PatreonConnection, SignedAsset } from "./types";
 
 const THUMBNAIL_BUCKET = "thumbnails";
+const SIGNED_URL_BATCH = 100;
 
 /**
  * True when a stored path is already a full remote URL. Files can be hosted on
@@ -191,28 +192,48 @@ export async function getSignedAssetUrls(
   const token = sessionData.session?.access_token;
   if (!token) throw new Error("Please sign in with Patreon to continue.");
 
-  const response = await fetch(`${FUNCTION_BASE}/media-signed-url`, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ assetIds: internal.map((asset) => asset.id) }),
-  });
+  // The Edge Function signs at most 100 files per request. Large galleries are
+  // signed in batches so a set with hundreds of images still unlocks in full.
+  const signed: Record<string, string> = {};
+  for (let start = 0; start < internal.length; start += SIGNED_URL_BATCH) {
+    const batch = internal.slice(start, start + SIGNED_URL_BATCH);
+    const response = await fetch(`${FUNCTION_BASE}/media-signed-url`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ assetIds: batch.map((asset) => asset.id) }),
+    });
 
-  const payload = (await response.json().catch(() => ({}))) as {
-    urls?: Array<{ assetId: string; url: string }>;
-    error?: string;
-  };
+    const payload = (await response.json().catch(() => ({}))) as {
+      urls?: Array<{ assetId: string; url: string }>;
+      error?: string;
+    };
 
-  if (!response.ok || !payload.urls) {
-    throw new Error(payload.error || "Could not unlock this set. Please try again.");
+    if (!response.ok || !payload.urls) {
+      throw new Error(payload.error || "Could not unlock this set. Please try again.");
+    }
+
+    for (const item of payload.urls) signed[item.assetId] = item.url;
   }
 
-  return {
-    ...external,
-    ...Object.fromEntries(payload.urls.map((item) => [item.assetId, item.url])),
-  };
+  return { ...external, ...signed };
+}
+
+/**
+ * Grid thumbnail helper. Supabase can render a resized copy of a signed object
+ * through its image endpoint, so galleries stay fast without ever using a
+ * thumbnail as the full-size viewing image. If transformations are unavailable
+ * the caller falls back to the original signed URL.
+ */
+export function galleryThumbnailUrl(url: string, width = 720): string {
+  if (!url) return url;
+  const marker = "/storage/v1/object/sign/";
+  if (!url.includes(marker)) return url;
+  const rendered = url.replace(marker, "/storage/v1/render/image/sign/");
+  const separator = rendered.includes("?") ? "&" : "?";
+  return `${rendered}${separator}width=${width}&quality=72&resize=contain`;
 }
 
 export async function downloadAsset(asset: MediaAsset): Promise<void> {

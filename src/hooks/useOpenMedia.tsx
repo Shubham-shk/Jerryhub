@@ -39,6 +39,11 @@ export function useOpenMedia() {
     }
 
     if (canAccessLevel(accessLevel, set.access_level)) {
+      // Image sets open the dedicated full-page gallery, never the player modal.
+      if (set.primary_type === "image") {
+        navigate(`/gallery/${set.slug || set.id}`);
+        return;
+      }
       setActiveSet(set);
       return;
     }

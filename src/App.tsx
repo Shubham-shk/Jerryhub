@@ -51,6 +51,14 @@ const AdminPackPage = lazy(() =>
   })),
 );
 
+/**
+ * The public image gallery is a full-page experience. It is lazy-loaded so the
+ * viewer bundle stays out of the initial homepage payload.
+ */
+const GalleryPage = lazy(() =>
+  import("./pages/GalleryPage").then((module) => ({ default: module.GalleryPage })),
+);
+
 function ScrollToTop() {
   const { pathname, hash } = useLocation();
 
@@ -95,6 +103,9 @@ export default function App() {
   const { verified } = useAgeGate();
   const { isAdmin, loading: authLoading } = useAuth();
   const minimal = location.pathname.startsWith("/auth/callback");
+  // The gallery owns the full viewport: no site navbar or footer, just its own
+  // compact header and back navigation.
+  const gallery = location.pathname.startsWith("/gallery/");
   // Legal pages must stay readable before verification. Everything else is gated.
   const legal = location.pathname.startsWith("/legal/");
   const unlocked = verified || legal;
@@ -108,9 +119,13 @@ export default function App() {
       {unlocked ? (
         <>
           <ScrollToTop />
-          {!minimal && <Navbar />}
+          {!minimal && !gallery && <Navbar />}
 
-          <main className={minimal ? "main main--minimal" : "main"}>
+          <main
+            className={
+              minimal ? "main main--minimal" : gallery ? "main main--gallery" : "main"
+            }
+          >
             {resolvingAdmin ? (
               <div className="admin-gate">
                 <Loader2 size={28} className="spin" />
@@ -132,6 +147,8 @@ export default function App() {
                   <Route path="/newest" element={<BrowsePage mode="newest" />} />
                   <Route path="/content/:slug" element={<ContentDetailsPage />} />
                   <Route path="/release/:slug" element={<ContentDetailsPage />} />
+                  <Route path="/gallery/:slug" element={<GalleryPage />} />
+                  <Route path="/gallery/:slug/:assetId" element={<GalleryPage />} />
                   <Route path="/faq" element={<FAQPage />} />
                   <Route path="/account" element={<AccountPage />} />
                   {isAdmin && <Route path="/admin" element={<AdminPage />} />}
@@ -147,7 +164,7 @@ export default function App() {
             )}
           </main>
 
-          {!minimal && <Footer />}
+          {!minimal && !gallery && <Footer />}
           <AuthPromptModal />
           <ToastViewport />
         </>

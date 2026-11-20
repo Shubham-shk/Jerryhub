@@ -87,40 +87,33 @@ export function LandingPage() {
   const { open, player } = useOpenMedia();
   const { getImage } = useSiteAssets();
 
-  const showcaseTrending = useMemo(
-    () => withSiteArtwork([...SHOWCASE_SETS].sort(trendingSort), getImage),
-    [getImage],
-  );
-  const showcaseNewest = useMemo(
-    () => withSiteArtwork([...SHOWCASE_SETS].sort(newestFirst), getImage),
+  // Only the 2D Games row still uses bundled showcase posters as filler.
+  const showcaseGames = useMemo(
+    () =>
+      withSiteArtwork(
+        SHOWCASE_SETS.filter((set) => set.category === "games").sort(newestFirst),
+        getImage,
+      ),
     [getImage],
   );
 
   // SECTION 2: Trending (Aggregates ALL categories: animation, arts, games, comics based on popularity/views)
+  // Published library sets only — no placeholder posters.
   const trendingList = tierSection(
-    fillToTen(
-      [...sets]
-        .filter((s) => s.is_trending || (s.views ?? 0) > 80000)
-        .sort(trendingSort),
-      showcaseTrending,
-    ),
+    [...sets]
+      .filter((s) => s.is_trending || (s.views ?? 0) > 80000)
+      .sort(trendingSort)
+      .slice(0, 10),
   );
 
   // SECTION 3: Newest Uploads (ALL categories sorted newest first)
-  const newestUploads = tierSection(
-    fillToTen([...sets].sort(newestFirst), showcaseNewest),
-  );
+  // Published library sets only — no placeholder posters.
+  const newestUploads = tierSection([...sets].sort(newestFirst).slice(0, 10));
 
-  // SECTION 4: Exclusive Arts + Videos (Dedicated section for artwork galleries & video releases)
-  const exclusiveArtsAndVideos = tierSection(
-    fillToTen(
-      sets
-        .filter((s) => s.category === "arts" || s.category === "animation")
-        .sort(newestFirst),
-      showcaseNewest.filter(
-        (s) => s.category === "arts" || s.category === "animation",
-      ),
-    ),
+  // SECTION 4: Manga + Comics (Separate digital manga & illustrated comic library)
+  // Published library sets only — no placeholder posters.
+  const mangaComicsList = tierSection(
+    sets.filter((s) => s.category === "comics").sort(newestFirst).slice(0, 10),
   );
 
   // SECTION 5: 2D Games (Separate discovery library for 2D games, VNs, RPGs)
@@ -128,18 +121,10 @@ export function LandingPage() {
   const gamesList = tierSection(
     fillToTen(
       sets.filter((s) => s.category === "games").sort(newestFirst),
-      showcaseNewest.filter((s) => s.category === "games"),
+      showcaseGames,
     ),
     true,
   ).map((set) => ({ ...set, coming_soon: true }));
-
-  // SECTION 6: Manga + Comics (Separate digital manga & illustrated comic library)
-  const mangaComicsList = tierSection(
-    fillToTen(
-      sets.filter((s) => s.category === "comics").sort(newestFirst),
-      showcaseNewest.filter((s) => s.category === "comics"),
-    ),
-  );
 
   return (
     <>
@@ -257,18 +242,18 @@ export function LandingPage() {
       </section>
 
       {/* ============================================================
-          SECTION 4 — EXCLUSIVE ARTS + VIDEOS (Immediately after Newest)
+          SECTION 4 — MANGA + COMICS (Separate Digital Library)
           ============================================================ */}
-      <section className="section library-section library-section--nsfw" id="nsfw-arts-videos">
+      <section className="section library-section library-section--comics" id="manga-comics">
         <div className="container">
           <Reveal>
             <SectionHeader
-              eyebrow="Sensual galleries &amp; motion"
-              title="Exclusive Arts + Videos"
-              description="High-DPI editorial pin-ups, private 2K video releases and ultraviolet motion art."
+              eyebrow="The digital reading room"
+              title="Manga + Comics"
+              description="Portrait-oriented illustrated stories, serialized webcomics and dark fantasy manga in crisp high-resolution."
               action={
-                <Link to="/newest?category=arts" className="link-arrow">
-                  <span>View all Art &amp; Videos</span>
+                <Link to="/newest?category=comics" className="link-arrow">
+                  <span>View All Manga</span>
                   <ArrowRight size={15} />
                 </Link>
               }
@@ -279,8 +264,8 @@ export function LandingPage() {
             {loading ? (
               <RowSkeleton count={5} />
             ) : (
-              <Carousel label="Exclusive Arts + Videos">
-                {exclusiveArtsAndVideos.map((set, index) => (
+              <Carousel label="Manga + Comics">
+                {mangaComicsList.map((set, index) => (
                   <MediaCard
                     key={set.id}
                     set={set}
@@ -292,13 +277,13 @@ export function LandingPage() {
                   />
                 ))}
                 <UnlockMoreCard
-                  category="arts"
-                  count="+10,000"
-                  title="Unlock 10,000+ Exclusive Artworks"
-                  subtitle="Full 4K galleries, videos & sensual motion"
-                  badge="EXCLUSIVE"
+                  category="comics"
+                  count="+350"
+                  title="Unlock 350+ Manga Chapters"
+                  subtitle="Unrated serialized chapters in reading room"
+                  badge="MANGA VAULT"
                   variant="carousel"
-                  index={exclusiveArtsAndVideos.length + 1}
+                  index={mangaComicsList.length + 1}
                 />
               </Carousel>
             )}
@@ -307,7 +292,7 @@ export function LandingPage() {
       </section>
 
       {/* ============================================================
-          SECTION 5 — 2D GAMES (Separate Discovery Library)
+          SECTION 5 — 2D GAMES (Separate Discovery Library, last row)
           ============================================================ */}
       <section className="section library-section library-section--games" id="games">
         <div className="container">
@@ -352,56 +337,6 @@ export function LandingPage() {
                   variant="carousel"
                   aspectRatio="16:9"
                   index={gamesList.length + 1}
-                />
-              </Carousel>
-            )}
-          </Reveal>
-        </div>
-      </section>
-
-      {/* ============================================================
-          SECTION 6 — MANGA + COMICS (Separate Digital Library)
-          ============================================================ */}
-      <section className="section library-section library-section--comics" id="manga-comics">
-        <div className="container">
-          <Reveal>
-            <SectionHeader
-              eyebrow="The digital reading room"
-              title="Manga + Comics"
-              description="Portrait-oriented illustrated stories, serialized webcomics and dark fantasy manga in crisp high-resolution."
-              action={
-                <Link to="/newest?category=comics" className="link-arrow">
-                  <span>View All Manga</span>
-                  <ArrowRight size={15} />
-                </Link>
-              }
-            />
-          </Reveal>
-
-          <Reveal delay={90}>
-            {loading ? (
-              <RowSkeleton count={5} />
-            ) : (
-              <Carousel label="Manga + Comics">
-                {mangaComicsList.map((set, index) => (
-                  <MediaCard
-                    key={set.id}
-                    set={set}
-                    locked={!canAccess(set.access_level)}
-                    onOpen={open}
-                    onLocked={open}
-                    variant="carousel"
-                    index={index + 1}
-                  />
-                ))}
-                <UnlockMoreCard
-                  category="comics"
-                  count="+350"
-                  title="Unlock 350+ Manga Chapters"
-                  subtitle="Unrated serialized chapters in reading room"
-                  badge="MANGA VAULT"
-                  variant="carousel"
-                  index={mangaComicsList.length + 1}
                 />
               </Carousel>
             )}

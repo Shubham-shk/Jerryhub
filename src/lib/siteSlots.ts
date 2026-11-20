@@ -75,7 +75,7 @@ export const SITE_SLOTS: SiteSlot[] = [
   {
     slot: "section-arts",
     section: "sections",
-    label: "Exclusive Arts + Videos banner",
+    label: "Arts gallery banner",
     fallback: POSTER_IMAGES[2],
     aspect: "portrait",
   },

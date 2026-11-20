@@ -21,6 +21,7 @@ import {
   createContentSet,
   deleteContentPack,
   deleteContentSet,
+  ensureStarterContentOnce,
   fetchContentPack,
   fetchContentPacks,
   fetchContentSet,
@@ -62,6 +63,7 @@ export function AdminSetsPage() {
     setLoading(true);
     setError(null);
     try {
+      await ensureStarterContentOnce().catch(() => undefined);
       const [nextSets, nextPacks, nextCounts] = await Promise.all([
         fetchContentSets(),
         fetchContentPacks(),
@@ -425,6 +427,7 @@ export function AdminPacksPage() {
     setLoading(true);
     setError(null);
     try {
+      await ensureStarterContentOnce().catch(() => undefined);
       const [nextPacks, nextSets, nextCounts] = await Promise.all([
         fetchContentPacks(),
         fetchContentSets(),

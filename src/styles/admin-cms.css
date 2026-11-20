@@ -649,3 +649,14 @@
     grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
   }
 }
+
+/* ---------- admin typography ---------- */
+/* The whole admin panel uses Arial, including headings and controls. */
+.page-hero--admin,
+.page-hero--admin *,
+.admin-section,
+.admin-section *,
+.admin-gate,
+.admin-gate * {
+  font-family: Arial, Helvetica, sans-serif !important;
+}

@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { DEMO_MODE } from "../../lib/config";
 import {
+  ensureStarterContentOnce,
   fetchContentPacks,
   fetchContentSets,
   fetchSetImageCounts,
@@ -34,6 +35,13 @@ export function ContentManagerOverview() {
     }
     setLoading(true);
     setError(null);
+    let seedError: string | null = null;
+    try {
+      await ensureStarterContentOnce();
+    } catch (nextError) {
+      seedError =
+        nextError instanceof Error ? nextError.message : "Could not create starter content.";
+    }
     try {
       const [nextSets, nextPacks, nextCounts] = await Promise.all([
         fetchContentSets(),
@@ -43,6 +51,12 @@ export function ContentManagerOverview() {
       setSets(nextSets);
       setPacks(nextPacks);
       setCounts(nextCounts);
+      if (seedError) {
+        setError(
+          `Starter Set 1 / Pack 1 could not be created (${seedError}). ` +
+            "Your Supabase profile needs is_admin = true to write content.",
+        );
+      }
     } catch (nextError) {
       // A missing migration should not break the rest of the dashboard.
       setSets([]);
@@ -76,8 +90,15 @@ export function ContentManagerOverview() {
 
       {error && (
         <p className="admin-cms-overview-error">
-          Could not load Sets &amp; Packs. Run the latest Supabase migration
-          (<code>content_sets</code>, <code>content_packs</code>, <code>set_images</code>).
+          {error}
+          {error.toLowerCase().includes("migration") ||
+          error.toLowerCase().includes("schema") ||
+          error.toLowerCase().includes("does not exist") ? (
+            <>
+              {" "}Run the latest Supabase migration (<code>content_sets</code>,{" "}
+              <code>content_packs</code>, <code>set_images</code>).
+            </>
+          ) : null}
         </p>
       )}
 

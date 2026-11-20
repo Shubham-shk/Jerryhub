@@ -208,6 +208,34 @@ export async function deleteContentPack(packId: string): Promise<void> {
   if (error) throw new Error(error.message);
 }
 
+/**
+ * Creates the starter Set 1 and Pack 1 when the CMS is completely empty. This
+ * keeps the default generic names visible on the first visit instead of an
+ * empty dashboard. Existing content is never touched.
+ */
+export async function ensureStarterContent(): Promise<void> {
+  const sets = await fetchContentSets();
+  const firstSet = sets[0] ?? (await createContentSet());
+
+  const packs = await fetchContentPacks();
+  if (!packs.length) {
+    await createContentPack({ setId: firstSet.id });
+  }
+}
+
+let starterPromise: Promise<void> | null = null;
+
+/** Runs the starter seed at most once per page session; retries after failure. */
+export function ensureStarterContentOnce(): Promise<void> {
+  if (!starterPromise) {
+    starterPromise = ensureStarterContent().catch((error: unknown) => {
+      starterPromise = null;
+      throw error;
+    });
+  }
+  return starterPromise;
+}
+
 /* ------------------------------- Images ---------------------------------- */
 
 export async function fetchSetImages(setId: string): Promise<SetImage[]> {

@@ -134,10 +134,12 @@ export function LandingPage() {
   );
 
   // SECTION 4: Manga + Comics (Separate digital manga & illustrated comic library)
-  // Real, populated library sets only — no showcase posters, no empty placeholders.
+  // Every published comics set is listed as soon as it is created — chapters are
+  // uploaded one at a time, so we cannot wait for `asset_count` to climb before
+  // showing the set. Bundled showcase posters are still excluded.
   const mangaComicsList = tierSection(
     sets
-      .filter((s) => hasRealContent(s) && s.category === "comics")
+      .filter((s) => !s.is_showcase && s.category === "comics")
       .sort(newestFirst)
       .slice(0, 10),
   );

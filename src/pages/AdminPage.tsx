@@ -62,7 +62,7 @@ const typeOptions: Array<{ value: MediaType; label: string }> = [
 
 const categoryOptions: Array<{ value: MediaCategory; label: string }> = [
   { value: "animation", label: "Animation" },
-  { value: "arts", label: "Arts & video" },
+  { value: "arts", label: "Image sets" },
   { value: "games", label: "2D Games" },
   { value: "comics", label: "Comics" },
 ];
@@ -133,7 +133,7 @@ function typeLabel(type: MediaType): string {
 
 const categoryShortLabels: Record<MediaCategory, string> = {
   animation: "Animation",
-  arts: "Arts & video",
+  arts: "Image sets",
   games: "2D Games",
   comics: "Comics",
 };
@@ -156,8 +156,8 @@ export function AdminPage() {
   const [form, setForm] = useState({
     title: "",
     description: "",
-    primary_type: "video" as MediaType,
-    category: "animation" as MediaCategory,
+    primary_type: "image" as MediaType,
+    category: "arts" as MediaCategory,
     access_level: "full" as AccessLevel,
     is_trending: false,
     is_new: true,
@@ -171,7 +171,7 @@ export function AdminPage() {
   const [posterTarget, setPosterTarget] = useState<MediaSet | null>(null);
 
   const [assetSetId, setAssetSetId] = useState("");
-  const [assetType, setAssetType] = useState<MediaType>("video");
+  const [assetType, setAssetType] = useState<MediaType>("image");
   const [assetFiles, setAssetFiles] = useState<File[]>([]);
   const [assetLinks, setAssetLinks] = useState("");
   const [assetDuration, setAssetDuration] = useState("");
@@ -183,6 +183,15 @@ export function AdminPage() {
     try {
       const data = await fetchAllMediaSets();
       setSets(data);
+      // Add files is pre-pointed at the newest set so uploading never starts
+      // from an empty "Choose a set…" state.
+      setAssetSetId((current) => {
+        if (current && data.some((set) => set.id === current)) return current;
+        const newest = [...data].sort(
+          (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+        )[0];
+        return newest?.id ?? "";
+      });
     } catch (nextError) {
       toast(nextError instanceof Error ? nextError.message : "Could not load sets.", "error");
     } finally {
@@ -284,28 +293,32 @@ export function AdminPage() {
       const slug = `${slugBase}-${Math.random().toString(36).slice(2, 6)}`;
       const maxSort = sets.reduce((max, set) => Math.max(max, set.sort_order), 0);
 
-      const insert = await client.from("media_sets").insert({
-        slug,
-        title: form.title.trim(),
-        description: form.description.trim() || null,
-        thumbnail_path: thumbnailPath,
-        primary_type: form.primary_type,
-        category: form.category,
-        access_level: form.access_level,
-        is_trending: form.is_trending,
-        is_new: form.is_new,
-        published: true,
-        duration_seconds: form.duration ? Number(form.duration) : null,
-        sort_order: maxSort + 1,
-      });
+      const insert = await client
+        .from("media_sets")
+        .insert({
+          slug,
+          title: form.title.trim(),
+          description: form.description.trim() || null,
+          thumbnail_path: thumbnailPath,
+          primary_type: form.primary_type,
+          category: form.category,
+          access_level: form.access_level,
+          is_trending: form.is_trending,
+          is_new: form.is_new,
+          published: true,
+          duration_seconds: form.duration ? Number(form.duration) : null,
+          sort_order: maxSort + 1,
+        })
+        .select("id")
+        .single();
       if (insert.error) throw insert.error;
 
       toast("Media set created.", "success");
       setForm({
         title: "",
         description: "",
-        primary_type: "video",
-        category: "animation",
+        primary_type: "image",
+        category: "arts",
         access_level: "full",
         is_trending: false,
         is_new: true,
@@ -315,6 +328,11 @@ export function AdminPage() {
       setThumbnailLink("");
       if (thumbInputRef.current) thumbInputRef.current.value = "";
       await loadSets();
+      // Point Step 2 at the set that was just created.
+      if (insert.data?.id) {
+        setAssetSetId(insert.data.id);
+        void loadAssets(insert.data.id);
+      }
     } catch (nextError) {
       if (uploadedPath) {
         await client.storage.from("thumbnails").remove([uploadedPath]);

@@ -69,6 +69,15 @@ function fillToTen(real: MediaSet[], showcase: MediaSet[]): MediaSet[] {
 const BASIC_SLOTS = 3;
 
 /**
+ * Empty library entries ("Set 15", "manga3") are leftover placeholders from the
+ * storefront build. They stay available in the admin library but never appear
+ * in the public homepage rows until real files are added to them.
+ */
+function hasRealContent(set: MediaSet): boolean {
+  return !set.is_showcase && (set.asset_count ?? 0) > 0;
+}
+
+/**
  * Storefront tiering: the first three posters of every section are Basic
  * Access, the rest are Full Access only. Sections marked `allFull` (2D Games)
  * are Full Access exclusively.
@@ -98,22 +107,39 @@ export function LandingPage() {
   );
 
   // SECTION 2: Trending (Aggregates ALL categories: animation, arts, games, comics based on popularity/views)
-  // Published library sets only — no placeholder posters.
+  // Real, populated library sets only — no showcase posters, no empty placeholders.
   const trendingList = tierSection(
     [...sets]
-      .filter((s) => s.is_trending || (s.views ?? 0) > 80000)
+      .filter(
+        (s) =>
+          hasRealContent(s) &&
+          (s.is_trending || (s.views ?? 0) > 80000),
+      )
       .sort(trendingSort)
       .slice(0, 10),
   );
 
-  // SECTION 3: Newest Uploads (ALL categories sorted newest first)
-  // Published library sets only — no placeholder posters.
-  const newestUploads = tierSection([...sets].sort(newestFirst).slice(0, 10));
+  // SECTION 3: NSFW Image Sets (adult art galleries only — comics excluded)
+  // Real, populated library sets only — no showcase posters, no empty placeholders.
+  const nsfwImageSets = tierSection(
+    sets
+      .filter(
+        (s) =>
+          hasRealContent(s) &&
+          s.category === "arts" &&
+          s.primary_type === "image",
+      )
+      .sort(newestFirst)
+      .slice(0, 10),
+  );
 
   // SECTION 4: Manga + Comics (Separate digital manga & illustrated comic library)
-  // Published library sets only — no placeholder posters.
+  // Real, populated library sets only — no showcase posters, no empty placeholders.
   const mangaComicsList = tierSection(
-    sets.filter((s) => s.category === "comics").sort(newestFirst).slice(0, 10),
+    sets
+      .filter((s) => hasRealContent(s) && s.category === "comics")
+      .sort(newestFirst)
+      .slice(0, 10),
   );
 
   // SECTION 5: 2D Games (Separate discovery library for 2D games, VNs, RPGs)
@@ -192,18 +218,18 @@ export function LandingPage() {
       </section>
 
       {/* ============================================================
-          SECTION 3 — NEWEST UPLOADS (All categories, newest first)
+          SECTION 3 — NSFW IMAGE SETS (Adult art galleries only)
           ============================================================ */}
-      <section className="section library-section library-section--newest" id="newest">
+      <section className="section library-section library-section--nsfw" id="nsfw-images">
         <div className="container">
           <Reveal>
             <SectionHeader
-              eyebrow="Fresh out of the vault"
-              title="Newest Uploads"
-              description="Latest animations, games, manga chapters and artwork drops landed in the private archive."
+              eyebrow="18+ · Uncensored art vault"
+              title="NSFW Image Sets"
+              description="Full-resolution adult art collections — uncensored stills, complete galleries and every new drop, with nothing held back."
               action={
-                <Link to="/newest" className="link-arrow">
-                  <span>Explore all newest</span>
+                <Link to="/newest?category=arts" className="link-arrow">
+                  <span>Browse all image sets</span>
                   <ArrowRight size={15} />
                 </Link>
               }
@@ -214,8 +240,8 @@ export function LandingPage() {
             {loading ? (
               <RowSkeleton count={5} />
             ) : (
-              <Carousel label="Newest Uploads">
-                {newestUploads.map((set, index) => (
+              <Carousel label="NSFW Image Sets">
+                {nsfwImageSets.map((set, index) => (
                   <MediaCard
                     key={set.id}
                     set={set}
@@ -227,13 +253,13 @@ export function LandingPage() {
                   />
                 ))}
                 <UnlockMoreCard
-                  category="newest"
-                  count="+1,200"
-                  title="Explore 1,200+ Vault Archives"
-                  subtitle="Daily uncensored drops added to private library"
-                  badge="NEW DROPS"
+                  category="arts"
+                  count="+2,400"
+                  title="Unlock 2,400+ NSFW Artworks"
+                  subtitle="4K galleries, uncensored sets & full-resolution drops"
+                  badge="18+ VAULT"
                   variant="carousel"
-                  index={newestUploads.length + 1}
+                  index={nsfwImageSets.length + 1}
                 />
               </Carousel>
             )}
@@ -264,28 +290,35 @@ export function LandingPage() {
             {loading ? (
               <RowSkeleton count={5} />
             ) : (
-              <Carousel label="Manga + Comics">
-                {mangaComicsList.map((set, index) => (
-                  <MediaCard
-                    key={set.id}
-                    set={set}
-                    locked={!canAccess(set.access_level)}
-                    onOpen={open}
-                    onLocked={open}
+              <>
+                {!mangaComicsList.length && (
+                  <p className="section-empty-note">
+                    New chapters are in production — fresh drops land here first.
+                  </p>
+                )}
+                <Carousel label="Manga + Comics">
+                  {mangaComicsList.map((set, index) => (
+                    <MediaCard
+                      key={set.id}
+                      set={set}
+                      locked={!canAccess(set.access_level)}
+                      onOpen={open}
+                      onLocked={open}
+                      variant="carousel"
+                      index={index + 1}
+                    />
+                  ))}
+                  <UnlockMoreCard
+                    category="comics"
+                    count="+350"
+                    title="Unlock 350+ Manga Chapters"
+                    subtitle="Unrated serialized chapters in reading room"
+                    badge="MANGA VAULT"
                     variant="carousel"
-                    index={index + 1}
+                    index={mangaComicsList.length + 1}
                   />
-                ))}
-                <UnlockMoreCard
-                  category="comics"
-                  count="+350"
-                  title="Unlock 350+ Manga Chapters"
-                  subtitle="Unrated serialized chapters in reading room"
-                  badge="MANGA VAULT"
-                  variant="carousel"
-                  index={mangaComicsList.length + 1}
-                />
-              </Carousel>
+                </Carousel>
+              </>
             )}
           </Reveal>
         </div>

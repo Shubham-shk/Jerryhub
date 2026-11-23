@@ -1763,8 +1763,46 @@ h1, h2, h3, h4, h5, h6 {
 
 .library-section--nsfw {
   background:
-    radial-gradient(900px 500px at 20% 40%, rgba(244, 63, 94, 0.08), transparent 65%),
+    radial-gradient(900px 500px at 20% 40%, rgba(244, 63, 94, 0.1), transparent 65%),
     radial-gradient(700px 400px at 85% 70%, rgba(245, 158, 11, 0.05), transparent 65%);
+  border-top: 1px solid rgba(244, 63, 94, 0.14);
+  border-bottom: 1px solid rgba(244, 63, 94, 0.1);
+}
+.library-section--nsfw::before {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(244, 63, 94, 0.5),
+    rgba(255, 45, 120, 0.5),
+    transparent
+  );
+}
+.library-section--nsfw .section-header .eyebrow {
+  width: fit-content;
+  margin-bottom: 12px;
+  padding: 6px 12px;
+  border: 1px solid rgba(244, 63, 94, 0.35);
+  border-radius: 999px;
+  background: rgba(244, 63, 94, 0.1);
+  color: #ff9fb3;
+  letter-spacing: 0.12em;
+  box-shadow: 0 0 26px rgba(244, 63, 94, 0.12);
+}
+.library-section--nsfw .section-title {
+  text-shadow:
+    0 3px 22px rgba(0, 0, 0, 0.8),
+    0 0 34px rgba(244, 63, 94, 0.3);
+}
+
+.section-empty-note {
+  margin: -10px 0 22px;
+  padding: 12px 16px;
+  border: 1px dashed rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.02);
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.6;
 }
 
 .library-section--games {

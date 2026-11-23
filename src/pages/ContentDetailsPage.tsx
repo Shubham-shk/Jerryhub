@@ -31,7 +31,7 @@ import { FULL_PRICE_LABEL, PATREON_PAGE_URL, UPGRADE_CTA_LABEL } from "../lib/co
 
 const categoryLabels: Record<MediaCategory, string> = {
   animation: "2K Animation",
-  arts: "Exclusive Arts & Video",
+  arts: "Image Sets",
   games: "2D Game / VN",
   comics: "Manga & Comics",
 };

@@ -64,8 +64,8 @@ const categoryInfo: Record<CategoryFilter, CategoryMetaItem> = {
     aspectRatio: "2:3",
   },
   arts: {
-    title: "Exclusive Arts & Galleries",
-    blurb: "Sensual editorial galleries, glitch loops, bioluminescent stills and 4K character portraits.",
+    title: "NSFW Image Sets",
+    blurb: "Uncensored adult art collections, 4K character portraits and full-resolution gallery drops.",
     kanji: "官能画集",
     icon: ImageIcon,
     aspectRatio: "2:3",

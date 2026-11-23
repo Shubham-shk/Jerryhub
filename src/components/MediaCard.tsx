@@ -6,14 +6,14 @@ import { useReveal } from "../hooks/useReveal";
 
 const typeLabels: Record<MediaType, string> = {
   video: "Video",
-  image: "Art Gallery",
+  image: "Image Set",
   pdf: "Manga / Comic",
   funscript: "Funscript",
 };
 
 const categoryLabels: Record<MediaCategory, string> = {
   animation: "Animation",
-  arts: "Exclusive Arts",
+  arts: "Image Sets",
   games: "2D Game",
   comics: "Manga",
 };

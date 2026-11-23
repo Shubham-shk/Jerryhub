@@ -57,8 +57,8 @@ export function UnlockMoreCard({
       sub: "Daily uncensored drops added to private library",
     },
     arts: {
-      title: "Unlock 10,000+ Exclusive Artworks",
-      sub: "Full 4K galleries, videos & sensual motion",
+      title: "Unlock 10,000+ NSFW Artworks",
+      sub: "Full 4K galleries, uncensored sets & motion",
     },
     games: {
       title: "Unlock 40+ Playable 2D Games",

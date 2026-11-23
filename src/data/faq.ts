@@ -57,7 +57,7 @@ export const faqItems: FaqItem[] = [
   {
     question: "How often is new content added?",
     answer:
-      "We aim for a new drop every day, with larger featured releases each week. Follow the Newest Uploads page or keep an eye on the announcement bar for the latest additions.",
+      "We aim for a new drop every day, with larger featured releases each week. Follow the image sets page or keep an eye on the announcement bar for the latest additions.",
   },
   {
     question: "How do I cancel or manage my membership?",

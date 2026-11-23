@@ -29,7 +29,7 @@ export function Footer() {
           <h4>Explore</h4>
           <Link to="/">Home</Link>
           <Link to="/trending">Trending</Link>
-          <Link to="/newest">Newest uploads</Link>
+          <Link to="/newest?category=arts">Image sets</Link>
           <Link to="/faq">FAQ</Link>
           <Link to="/account">My account</Link>
         </div>

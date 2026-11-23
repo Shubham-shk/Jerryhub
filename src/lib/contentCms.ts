@@ -1,5 +1,6 @@
 import { DEMO_MODE } from "./config";
 import { requireSupabase } from "./supabase";
+import type { AccessLevel } from "./types";
 
 /* ----------------------------------------------------------------------------
  * Sets & Packs CMS
@@ -22,6 +23,12 @@ export interface ContentSet {
   media_set_id: string | null;
   /** Homepage collection the album publishes into. */
   category: "animation" | "arts" | "games" | "comics";
+  /**
+   * Membership level required to open this album. Mirrored onto the linked
+   * media_sets row, which is what the storefront and the signed-URL function
+   * actually enforce.
+   */
+  access_level: AccessLevel;
 }
 
 export interface ContentPack {
@@ -187,6 +194,14 @@ export async function ensureMediaSetForContentSet(
   if (set.media_set_id) return set.media_set_id;
   if (DEMO_MODE) throw new Error("Connect Supabase to publish albums.");
 
+  // The database trigger publishes albums as soon as an image is inserted, so
+  // the caller's copy of the album can be a few milliseconds stale. Re-read it
+  // first and reuse the listing the trigger already created instead of making a
+  // duplicate storefront set.
+  const fresh = await fetchContentSet(set.id);
+  if (fresh?.media_set_id) return fresh.media_set_id;
+  if (fresh) set = fresh;
+
   const db = client();
   const category = options.category ?? set.category ?? "arts";
   const slugBase =
@@ -212,7 +227,7 @@ export async function ensureMediaSetForContentSet(
       thumbnail_path: cover,
       primary_type: category === "comics" ? "pdf" : "image",
       category,
-      access_level: "full",
+      access_level: set.access_level ?? "full",
       published: true,
       is_new: true,
       is_trending: false,
@@ -225,6 +240,51 @@ export async function ensureMediaSetForContentSet(
   const mediaSetId = data.id as string;
   await linkContentSetToMediaSet(set.id, mediaSetId);
   return mediaSetId;
+}
+
+/** Toggles the Trending flag on the storefront listing an album publishes as. */
+export async function setContentSetTrending(
+  set: ContentSet,
+  trending: boolean,
+): Promise<void> {
+  const db = client();
+  const mediaSetId = set.media_set_id ?? (await ensureMediaSetForContentSet(set));
+  const { error } = await db
+    .from("media_sets")
+    .update({ is_trending: trending })
+    .eq("id", mediaSetId);
+  if (error) throw new Error(error.message);
+}
+
+export interface ContentSetPublication {
+  id: string;
+  is_trending: boolean;
+  is_new: boolean;
+  published: boolean;
+  asset_count: number;
+}
+
+/** Storefront state of the media set an album publishes as, if any. */
+export async function fetchContentSetPublication(
+  setId: string,
+): Promise<ContentSetPublication | null> {
+  if (DEMO_MODE) return null;
+  const album = await fetchContentSet(setId);
+  if (!album?.media_set_id) return null;
+  const { data, error } = await client()
+    .from("media_sets")
+    .select("id, is_trending, is_new, published, asset_count")
+    .eq("id", album.media_set_id)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!data) return null;
+  return {
+    id: data.id as string,
+    is_trending: Boolean(data.is_trending),
+    is_new: Boolean(data.is_new),
+    published: Boolean(data.published),
+    asset_count: Number(data.asset_count ?? 0),
+  };
 }
 
 /**
@@ -253,6 +313,34 @@ export async function setContentSetCategory(
       category,
       primary_type: category === "comics" ? "pdf" : "image",
     })
+    .eq("id", mediaSetId);
+  if (mediaError) throw new Error(mediaError.message);
+}
+
+/**
+ * Sets the membership level an album requires and keeps its storefront row in
+ * sync. The database trigger mirrors the value too; writing both here means the
+ * change is visible immediately even if the trigger is not deployed yet.
+ */
+export async function setContentSetAccess(
+  setId: string,
+  accessLevel: AccessLevel,
+): Promise<void> {
+  const db = client();
+  const { data, error } = await db
+    .from("content_sets")
+    .update({ access_level: accessLevel })
+    .eq("id", setId)
+    .select("media_set_id")
+    .single();
+  if (error) throw new Error(error.message);
+
+  const mediaSetId = (data as { media_set_id: string | null }).media_set_id;
+  if (!mediaSetId) return;
+
+  const { error: mediaError } = await db
+    .from("media_sets")
+    .update({ access_level: accessLevel })
     .eq("id", mediaSetId);
   if (mediaError) throw new Error(mediaError.message);
 }
@@ -419,6 +507,17 @@ export async function addSetImages(setId: string, urls: string[]): Promise<SetIm
     .insert(rows)
     .select("*");
   if (error) throw new Error(error.message);
+
+  // Publishing is also guaranteed by a database trigger, but calling it here
+  // keeps the very first admin session on an older deployed bundle in sync as
+  // well. Failures must not lose the images that were just saved.
+  try {
+    const album = await fetchContentSet(setId);
+    if (album) await ensureMediaSetForContentSet(album);
+  } catch {
+    // The trigger or a later "Publish album" click completes the listing.
+  }
+
   return (data ?? []) as SetImage[];
 }
 

@@ -26,15 +26,20 @@ import {
   fetchContentPack,
   fetchContentPacks,
   fetchContentSet,
+  fetchContentSetPublication,
   fetchContentSets,
   fetchSetImageCounts,
   nextDefaultName,
   renameContentSet,
+  setContentSetAccess,
   setContentSetCategory,
+  setContentSetTrending,
   updateContentPack,
   type ContentPack,
   type ContentSet,
+  type ContentSetPublication,
 } from "../../lib/contentCms";
+import type { AccessLevel } from "../../lib/types";
 
 function errorMessage(error: unknown, fallback: string): string {
   return error instanceof Error ? error.message : fallback;
@@ -270,6 +275,7 @@ export function AdminSetPage() {
   const { setId } = useParams<{ setId: string }>();
   const { toast } = useUI();
   const [set, setSet] = useState<ContentSet | null>(null);
+  const [publication, setPublication] = useState<ContentSetPublication | null>(null);
   const [packs, setPacks] = useState<ContentPack[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -290,16 +296,19 @@ export function AdminSetPage() {
     setLoading(true);
     setError(null);
     try {
-      const [nextSet, nextPacks] = await Promise.all([
+      const [nextSet, nextPacks, nextPublication] = await Promise.all([
         fetchContentSet(setId),
         fetchContentPacks(),
+        fetchContentSetPublication(setId).catch(() => null),
       ]);
       if (!nextSet) {
         setError("This set no longer exists.");
         setSet(null);
+        setPublication(null);
         return;
       }
       setSet(nextSet);
+      setPublication(nextPublication);
       setNameDraft(nextSet.name);
       setPacks(nextPacks.filter((pack) => pack.set_id === setId));
     } catch (nextError) {
@@ -357,6 +366,34 @@ export function AdminSetPage() {
     }
   }
 
+  async function handleAccess(next: AccessLevel) {
+    if (!set) return;
+    setPublishing(true);
+    try {
+      await setContentSetAccess(set.id, next);
+      toast(`Access set to ${next === "full" ? "Full Access" : "Basic Access"}.`, "success");
+      await load();
+    } catch (nextError) {
+      toast(errorMessage(nextError, "Could not update access."), "error");
+    } finally {
+      setPublishing(false);
+    }
+  }
+
+  async function handleTrending(next: boolean) {
+    if (!set) return;
+    setPublishing(true);
+    try {
+      await setContentSetTrending(set, next);
+      toast(next ? "Album is now trending." : "Album removed from trending.", "success");
+      await load();
+    } catch (nextError) {
+      toast(errorMessage(nextError, "Could not update trending."), "error");
+    } finally {
+      setPublishing(false);
+    }
+  }
+
   if (loading) {
     return (
       <AdminCmsShell title="Set" backTo="/admin/sets" backLabel="All sets">
@@ -364,7 +401,6 @@ export function AdminSetPage() {
       </AdminCmsShell>
     );
   }
-
   if (error || !set) {
     return (
       <AdminCmsShell title="Set unavailable" backTo="/admin/sets" backLabel="All sets">
@@ -375,6 +411,13 @@ export function AdminSetPage() {
       </AdminCmsShell>
     );
   }
+
+  // Older rows may predate the column; treat anything unexpected as Full, which
+  // is the historical default for every album.
+  const currentAccess: AccessLevel =
+    set.access_level === "basic" || set.access_level === "public"
+      ? set.access_level
+      : "full";
 
   return (
     <AdminCmsShell
@@ -439,6 +482,60 @@ export function AdminSetPage() {
               </button>
             )}
           </div>
+
+          <div className="admin-cms-access">
+            <span className="admin-cms-access-label">Membership access</span>
+            <div
+              className="admin-cms-segment"
+              role="group"
+              aria-label="Album membership access"
+            >
+              <button
+                type="button"
+                className={`admin-cms-segment-btn${currentAccess === "basic" ? " is-active" : ""}`}
+                onClick={() => void handleAccess("basic")}
+                disabled={publishing}
+                aria-pressed={currentAccess === "basic"}
+              >
+                Basic Access
+              </button>
+              <button
+                type="button"
+                className={`admin-cms-segment-btn${currentAccess === "full" ? " is-active" : ""}`}
+                onClick={() => void handleAccess("full")}
+                disabled={publishing}
+                aria-pressed={currentAccess === "full"}
+              >
+                Full Access
+              </button>
+            </div>
+            <p className="admin-cms-meta">
+              {currentAccess === "full"
+                ? "Only Full Access members can open this album."
+                : "Basic Access members and above can open this album."}
+              {!set.media_set_id
+                ? " Saving publishes this choice with the album."
+                : " Applies to the live listing immediately."}
+            </p>
+          </div>
+
+          <label className="admin-cms-toggle">
+            <input
+              type="checkbox"
+              checked={Boolean(publication?.is_trending)}
+              onChange={(event) => void handleTrending(event.target.checked)}
+              disabled={publishing || (!set.media_set_id && !publication)}
+            />
+            <span>
+              Show in Trending
+              {publication ? ` · ${publication.asset_count} live image${publication.asset_count === 1 ? "" : "s"}` : ""}
+            </span>
+          </label>
+          {!publication && (
+            <p className="admin-cms-meta">
+              Add the first image and this album publishes itself here automatically.
+            </p>
+          )}
         </div>
 
         <div className="admin-cms-shared">

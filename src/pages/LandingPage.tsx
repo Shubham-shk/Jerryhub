@@ -117,15 +117,18 @@ export function LandingPage() {
       .slice(0, 10),
   );
 
-  // SECTION 3: NSFW Image Sets (adult art galleries only — comics excluded)
-  // Real, populated library sets only — no showcase posters, no empty placeholders.
+  // SECTION 3: NSFW Image Sets (adult art galleries — comics and games excluded)
+  // Every published image set with real files is listed, whatever its library
+  // category, so an admin who drops images into a set cannot end up with a set
+  // that exists but never appears here.
   const nsfwImageSets = tierSection(
     sets
       .filter(
         (s) =>
           hasRealContent(s) &&
-          s.category === "arts" &&
-          s.primary_type === "image",
+          s.category !== "comics" &&
+          s.category !== "games" &&
+          (s.primary_type === "image" || s.category === "arts"),
       )
       .sort(newestFirst)
       .slice(0, 10),

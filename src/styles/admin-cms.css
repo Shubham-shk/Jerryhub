@@ -414,6 +414,71 @@
   color: var(--muted-2);
   font-size: 9.5px;
 }
+.admin-cms-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  font-size: 10px;
+  color: var(--text);
+  cursor: pointer;
+}
+.admin-cms-toggle input {
+  width: 15px;
+  height: 15px;
+  accent-color: var(--accent, #e11d48);
+}
+/* ---------- membership access toggle ---------- */
+.admin-cms-access {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+.admin-cms-access-label {
+  font-size: 11px;
+  font-weight: 650;
+}
+.admin-cms-segment {
+  display: inline-flex;
+  align-self: flex-start;
+  padding: 3px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.03);
+}
+.admin-cms-segment-btn {
+  appearance: none;
+  border: 0;
+  border-radius: 999px;
+  padding: 6px 16px;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.admin-cms-segment-btn:hover:not(:disabled):not(.is-active) {
+  color: #fff;
+}
+.admin-cms-segment-btn.is-active {
+  background: linear-gradient(135deg, #e11d48, #be123c);
+  color: #fff;
+  box-shadow: 0 6px 18px -10px rgba(225, 29, 72, 0.9);
+}
+.admin-cms-segment-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+.admin-cms-segment-btn:focus-visible {
+  outline: 2px solid rgba(255, 45, 120, 0.6);
+  outline-offset: 2px;
+}
+
 .admin-cms-chiplist {
   display: flex;
   flex-wrap: wrap;

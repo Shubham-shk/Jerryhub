@@ -143,6 +143,14 @@ export function BrowsePage({ mode }: { mode?: "trending" | "newest" | "all" }) {
   const filtered = useMemo(() => {
     let list = [...sets];
 
+    // Rankings only list sets that actually have files. Empty placeholders must
+    // never outrank a freshly uploaded set.
+    if (isTrendingMode) {
+      list = list.filter(
+        (s) => !s.is_showcase && (s.asset_count ?? 0) > 0,
+      );
+    }
+
     // Category filter
     if (category !== "all") {
       if (category === "video") {
@@ -183,7 +191,7 @@ export function BrowsePage({ mode }: { mode?: "trending" | "newest" | "all" }) {
     }
 
     return list;
-  }, [sets, category, query, sort]);
+  }, [sets, category, query, sort, isTrendingMode]);
 
   const totalFiles = filtered.reduce((total, s) => total + s.asset_count, 0);
 

@@ -54,7 +54,7 @@ export function NewestPage() {
 
   const newest = useMemo(() => {
     const list = sets
-      .filter((set) => !set.is_showcase)
+      .filter((set) => !set.is_showcase && (set.asset_count ?? 0) > 0)
       .filter((set) => (filter === "all" ? true : set.category === filter))
       .sort(
         (a: MediaSet, b: MediaSet) =>

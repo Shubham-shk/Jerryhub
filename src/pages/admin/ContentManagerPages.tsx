@@ -21,6 +21,7 @@ import {
   createContentSet,
   deleteContentPack,
   deleteContentSet,
+  ensureMediaSetForContentSet,
   ensureStarterContentOnce,
   fetchContentPack,
   fetchContentPacks,
@@ -29,6 +30,7 @@ import {
   fetchSetImageCounts,
   nextDefaultName,
   renameContentSet,
+  setContentSetCategory,
   updateContentPack,
   type ContentPack,
   type ContentSet,
@@ -273,6 +275,7 @@ export function AdminSetPage() {
   const [error, setError] = useState<string | null>(null);
   const [nameDraft, setNameDraft] = useState("");
   const [savingName, setSavingName] = useState(false);
+  const [publishing, setPublishing] = useState(false);
 
   const load = useCallback(async () => {
     if (!setId) {
@@ -326,6 +329,34 @@ export function AdminSetPage() {
     }
   }
 
+  async function handlePublish() {
+    if (!set) return;
+    setPublishing(true);
+    try {
+      await ensureMediaSetForContentSet(set);
+      toast("Published — this album is now live on the site.", "success");
+      await load();
+    } catch (nextError) {
+      toast(errorMessage(nextError, "Could not publish this album."), "error");
+    } finally {
+      setPublishing(false);
+    }
+  }
+
+  async function handleCategory(category: ContentSet["category"]) {
+    if (!set) return;
+    setPublishing(true);
+    try {
+      await setContentSetCategory(set.id, category);
+      toast(`Album moved to ${category}.`, "success");
+      await load();
+    } catch (nextError) {
+      toast(errorMessage(nextError, "Could not move this album."), "error");
+    } finally {
+      setPublishing(false);
+    }
+  }
+
   if (loading) {
     return (
       <AdminCmsShell title="Set" backTo="/admin/sets" backLabel="All sets">
@@ -372,6 +403,43 @@ export function AdminSetPage() {
             Save name
           </button>
         </form>
+
+        <div className="admin-cms-shared">
+          <h2>Where this album appears</h2>
+          <p>
+            {set.media_set_id
+              ? "Published. These images are live in the gallery and on the homepage rows."
+              : "Not published yet. Images exist but nothing shows on the public site until this album is published."}
+          </p>
+          <div className="admin-cms-inline-form">
+            <label className="field">
+              <span>Homepage collection</span>
+              <select
+                value={set.category}
+                onChange={(event) =>
+                  void handleCategory(event.target.value as ContentSet["category"])
+                }
+                disabled={publishing}
+              >
+                <option value="arts">NSFW Image Sets</option>
+                <option value="comics">Manga + Comics</option>
+                <option value="animation">Animations</option>
+                <option value="games">2D Games</option>
+              </select>
+            </label>
+            {!set.media_set_id && (
+              <button
+                type="button"
+                className="btn btn--primary btn--sm"
+                onClick={() => void handlePublish()}
+                disabled={publishing}
+              >
+                {publishing ? <Loader2 size={14} className="spin" /> : <Plus size={14} />}
+                Publish album
+              </button>
+            )}
+          </div>
+        </div>
 
         <div className="admin-cms-shared">
           <h2>Packs using this set</h2>

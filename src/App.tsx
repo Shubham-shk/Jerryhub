@@ -15,6 +15,7 @@ import { ContentDetailsPage } from "./pages/ContentDetailsPage";
 import { FAQPage } from "./pages/FAQPage";
 import { LandingPage } from "./pages/LandingPage";
 import { LegalPage } from "./pages/LegalPage";
+import { NewestPage } from "./pages/NewestPage";
 import { NotFoundPage } from "./pages/NotFoundPage";
 
 /**
@@ -144,7 +145,7 @@ export default function App() {
                   <Route path="/" element={<LandingPage />} />
                   <Route path="/browse" element={<BrowsePage mode="all" />} />
                   <Route path="/trending" element={<BrowsePage mode="trending" />} />
-                  <Route path="/newest" element={<BrowsePage mode="newest" />} />
+                  <Route path="/newest" element={<NewestPage />} />
                   <Route path="/content/:slug" element={<ContentDetailsPage />} />
                   <Route path="/release/:slug" element={<ContentDetailsPage />} />
                   <Route path="/gallery/:slug" element={<GalleryPage />} />

@@ -20,7 +20,7 @@ import { useDocumentTitle } from "../hooks/useDocumentTitle";
 import { useMediaSets } from "../hooks/useMediaSets";
 import {
   downloadAsset,
-  fetchSetAssets,
+  fetchSetGalleryImages,
   galleryThumbnailUrl,
   getSignedAssetUrls,
 } from "../lib/api";
@@ -79,7 +79,7 @@ export function GalleryPage() {
     setImages([]);
     setUrls({});
 
-    fetchSetAssets(set.id)
+    fetchSetGalleryImages(set.id)
       .then(async (nextAssets) => {
         if (cancelled) return;
         const nextImages = nextAssets.filter((asset) => asset.type === "image");

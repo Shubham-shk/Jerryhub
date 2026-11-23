@@ -14,6 +14,8 @@ import { useUI } from "../../context/UIContext";
 import {
   addSetImages,
   deleteSetImage,
+  ensureMediaSetForContentSet,
+  fetchContentSet,
   fetchSetImages,
   saveSetImageOrder,
   updateSetImageUrl,
@@ -97,6 +99,18 @@ export function AlbumEditor({
     setAdding(true);
     try {
       await addSetImages(setId, urls);
+
+      // An album with no storefront link is invisible everywhere on the public
+      // site. Publishing here means the images show up in the gallery, the NSFW
+      // Image Sets row and Trending the moment they are added.
+      try {
+        const album = await fetchContentSet(setId);
+        if (album) await ensureMediaSetForContentSet(album);
+      } catch {
+        // The images are saved either way; publishing can be retried from the
+        // set page without re-uploading anything.
+      }
+
       setDraft("");
       toast(`${urls.length} image${urls.length === 1 ? "" : "s"} added.`, "success");
       await load();

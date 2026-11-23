@@ -83,7 +83,7 @@ export function UnlockMoreCard({
       e.stopPropagation();
     }
     if (isPatron) {
-      navigate(category === "all" ? "/browse" : `/newest?category=${category}`);
+      navigate(category === "all" ? "/browse" : `/browse?category=${category}`);
       return;
     }
     const pricingEl = document.getElementById("pricing");

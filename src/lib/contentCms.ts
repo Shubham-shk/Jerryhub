@@ -15,6 +15,13 @@ export interface ContentSet {
   sort_order: number;
   created_at: string;
   updated_at: string;
+  /**
+   * The storefront media_sets row this album publishes as. Null means the album
+   * is still private and nothing in it appears on the public site.
+   */
+  media_set_id: string | null;
+  /** Homepage collection the album publishes into. */
+  category: "animation" | "arts" | "games" | "comics";
 }
 
 export interface ContentPack {
@@ -131,6 +138,133 @@ export async function renameContentSet(setId: string, name: string): Promise<Con
     .single();
   if (error) throw new Error(error.message);
   return data as ContentSet;
+}
+
+/**
+ * Links an album to the storefront set it publishes as. Passing null unpublishes
+ * the album without deleting any images.
+ */
+export async function linkContentSetToMediaSet(
+  setId: string,
+  mediaSetId: string | null,
+): Promise<ContentSet> {
+  const { data, error } = await client()
+    .from("content_sets")
+    .update({ media_set_id: mediaSetId })
+    .eq("id", setId)
+    .select("*")
+    .single();
+  if (error) throw new Error(error.message);
+  return data as ContentSet;
+}
+
+/** Returns the album linked to a storefront set, if one exists. */
+export async function fetchContentSetForMediaSet(
+  mediaSetId: string,
+): Promise<ContentSet | null> {
+  if (DEMO_MODE) return null;
+  const { data, error } = await client()
+    .from("content_sets")
+    .select("*")
+    .eq("media_set_id", mediaSetId)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  return (data as ContentSet | null) ?? null;
+}
+
+/**
+ * Guarantees an album is visible on the public site.
+ *
+ * An album with no `media_set_id` is invisible to every storefront query, which
+ * is exactly why images added in the Sets area never appeared. This creates the
+ * storefront row on first use and links it, so the album shows up in the NSFW
+ * Image Sets row, Trending, the gallery and the comics row immediately.
+ */
+export async function ensureMediaSetForContentSet(
+  set: ContentSet,
+  options: { category?: "arts" | "comics" | "animation" | "games" } = {},
+): Promise<string> {
+  if (set.media_set_id) return set.media_set_id;
+  if (DEMO_MODE) throw new Error("Connect Supabase to publish albums.");
+
+  const db = client();
+  const category = options.category ?? set.category ?? "arts";
+  const slugBase =
+    set.name
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 60) || "set";
+  const slug = `${slugBase}-${Math.random().toString(36).slice(2, 6)}`;
+
+  const images = await fetchSetImages(set.id);
+  if (!images.length) {
+    throw new Error("Add at least one image before publishing this album.");
+  }
+  const cover = images[0].image_url;
+
+  const { data, error } = await db
+    .from("media_sets")
+    .insert({
+      slug,
+      title: set.name,
+      description: null,
+      thumbnail_path: cover,
+      primary_type: category === "comics" ? "pdf" : "image",
+      category,
+      access_level: "full",
+      published: true,
+      is_new: true,
+      is_trending: false,
+      sort_order: 0,
+    })
+    .select("id")
+    .single();
+  if (error) throw new Error(error.message);
+
+  const mediaSetId = data.id as string;
+  await linkContentSetToMediaSet(set.id, mediaSetId);
+  return mediaSetId;
+}
+
+/**
+ * Moves an already-published album into a different homepage collection and
+ * keeps the storefront row in sync.
+ */
+export async function setContentSetCategory(
+  setId: string,
+  category: "animation" | "arts" | "games" | "comics",
+): Promise<void> {
+  const db = client();
+  const { data, error } = await db
+    .from("content_sets")
+    .update({ category })
+    .eq("id", setId)
+    .select("media_set_id")
+    .single();
+  if (error) throw new Error(error.message);
+
+  const mediaSetId = (data as { media_set_id: string | null }).media_set_id;
+  if (!mediaSetId) return;
+
+  const { error: mediaError } = await db
+    .from("media_sets")
+    .update({
+      category,
+      primary_type: category === "comics" ? "pdf" : "image",
+    })
+    .eq("id", mediaSetId);
+  if (mediaError) throw new Error(mediaError.message);
+}
+
+/** Album images for a storefront set, in display order. */
+export async function fetchAlbumImagesForMediaSet(
+  mediaSetId: string,
+): Promise<SetImage[]> {
+  if (DEMO_MODE) return [];
+  const album = await fetchContentSetForMediaSet(mediaSetId);
+  if (!album) return [];
+  return fetchSetImages(album.id);
 }
 
 export async function deleteContentSet(setId: string): Promise<void> {

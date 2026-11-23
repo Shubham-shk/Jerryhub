@@ -2,6 +2,7 @@ import { DEMO_MODE, FUNCTION_BASE, SUPABASE_URL } from "./config";
 import { MOCK_SETS } from "../data/mockData";
 import { requireSupabase, supabase } from "./supabase";
 import { normalizeAccessLevel } from "./access";
+import { fetchContentSetForMediaSet, fetchSetImages } from "./contentCms";
 import type { AccessLevel, MediaAsset, MediaSet, PatreonConnection, SignedAsset } from "./types";
 
 const THUMBNAIL_BUCKET = "thumbnails";
@@ -114,6 +115,45 @@ export async function fetchSetAssets(setId: string): Promise<MediaAsset[]> {
 
   if (error) throw new Error(error.message);
   return (data ?? []) as MediaAsset[];
+}
+
+/**
+ * Every image belonging to a storefront set, from both storage systems.
+ *
+ * Private uploads live in media_assets; images added through the admin album
+ * editor live in set_images under the linked content_set. Reading only one of
+ * them is what made album images invisible in the gallery, so both are merged
+ * here and returned in display order.
+ */
+export async function fetchSetGalleryImages(setId: string): Promise<MediaAsset[]> {
+  const assets = await fetchSetAssets(setId);
+  const uploaded = assets.filter((asset) => asset.type === "image");
+
+  if (DEMO_MODE) return uploaded;
+
+  let albumImages: MediaAsset[] = [];
+  try {
+    const album = await fetchContentSetForMediaSet(setId);
+    if (album) {
+      const rows = await fetchSetImages(album.id);
+      albumImages = rows.map((row) => ({
+        id: row.id,
+        set_id: setId,
+        type: "image" as const,
+        storage_path: row.image_url,
+        file_name: row.image_url.split("/").pop() || `image-${row.sort_order}`,
+        mime_type: null,
+        size_bytes: null,
+        duration_seconds: null,
+        sort_order: row.sort_order,
+      }));
+    }
+  } catch {
+    // A missing album link must never break a gallery that has real uploads.
+    albumImages = [];
+  }
+
+  return [...uploaded, ...albumImages].sort((a, b) => a.sort_order - b.sort_order);
 }
 
 /**

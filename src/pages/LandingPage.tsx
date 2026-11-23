@@ -108,13 +108,11 @@ export function LandingPage() {
 
   // SECTION 2: Trending (Aggregates ALL categories: animation, arts, games, comics based on popularity/views)
   // Real, populated library sets only — no showcase posters, no empty placeholders.
+  // The view threshold is a preference, not a gate: a freshly published album has
+  // no view history yet and must still be able to rank here.
   const trendingList = tierSection(
     [...sets]
-      .filter(
-        (s) =>
-          hasRealContent(s) &&
-          (s.is_trending || (s.views ?? 0) > 80000),
-      )
+      .filter((s) => hasRealContent(s) && (s.is_trending || (s.views ?? 0) > 0 || s.is_new))
       .sort(trendingSort)
       .slice(0, 10),
   );
@@ -230,7 +228,7 @@ export function LandingPage() {
               title="NSFW Image Sets"
               description="Full-resolution adult art collections — uncensored stills, complete galleries and every new drop, with nothing held back."
               action={
-                <Link to="/newest?category=arts" className="link-arrow">
+                <Link to="/browse?category=arts" className="link-arrow">
                   <span>Browse all image sets</span>
                   <ArrowRight size={15} />
                 </Link>
@@ -280,7 +278,7 @@ export function LandingPage() {
               title="Manga + Comics"
               description="Portrait-oriented illustrated stories, serialized webcomics and dark fantasy manga in crisp high-resolution."
               action={
-                <Link to="/newest?category=comics" className="link-arrow">
+                <Link to="/browse?category=comics" className="link-arrow">
                   <span>View All Manga</span>
                   <ArrowRight size={15} />
                 </Link>
@@ -337,7 +335,7 @@ export function LandingPage() {
               title="2D Games"
               description="Interactive choice-driven visual novels, fantasy RPG adventures and retro arcade nights with unlocked gallery scenes."
               action={
-                <Link to="/newest?category=games" className="link-arrow">
+                <Link to="/browse?category=games" className="link-arrow">
                   <span>View All Games</span>
                   <ArrowRight size={15} />
                 </Link>

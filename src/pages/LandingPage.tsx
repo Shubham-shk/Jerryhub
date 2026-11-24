@@ -103,7 +103,8 @@ export function LandingPage() {
   );
 
   // SECTION 2: Trending (Aggregates ALL categories: animation, arts, games, comics based on popularity/views)
-  // Real, populated library sets only — no showcase posters, no empty placeholders.
+  // Real, populated library sets plus sets the admin explicitly flagged as
+  // Trending, so a newly created set can rank before its files finish uploading.
   // The view threshold is a preference, not a gate: a freshly published album has
   // no view history yet and must still be able to rank here.
   // The stored access_level is the single source of truth for every poster —
@@ -120,8 +121,8 @@ export function LandingPage() {
 
   // SECTION 4: NSFW Image Sets (adult art galleries — comics and games excluded)
   // Every published image set with real files is listed, whatever its library
-  // category, so an admin who drops images into a set cannot end up with a set
-  // that exists but never appears here.
+  // category, plus image sets explicitly flagged Trending so an admin who drops
+  // images into a set cannot end up with a set that exists but never appears here.
   const nsfwImageSets = sets
     .filter(
       (s) =>

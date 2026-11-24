@@ -13,7 +13,6 @@ import {
   Menu,
   Search,
   ShieldCheck,
-  Sparkles,
   UserRound,
   X,
 } from "lucide-react";
@@ -27,7 +26,6 @@ import { StatusPill } from "./StatusPill";
 const navItems = [
   { to: "/", label: "Home", icon: Home, end: true },
   { to: "/browse", label: "Browse", icon: Compass },
-  { to: "/newest", label: "Newest Uploads", icon: Sparkles },
   { to: "/trending", label: "Trending", icon: Flame },
   { to: "/browse?category=games", label: "2D Games", icon: Gamepad2 },
   { to: "/browse?category=comics", label: "Manga + Comics", icon: BookOpen },

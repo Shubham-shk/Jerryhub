@@ -75,6 +75,16 @@ function hasRealContent(set: MediaSet): boolean {
   return !set.is_showcase && (set.asset_count ?? 0) > 0;
 }
 
+/**
+ * A set is worth showing when it has files, or when an admin explicitly marked
+ * it trending. Empty placeholder rows stay out of the public rows, but a set the
+ * admin just created and flagged shows up immediately — even before its files
+ * finish uploading.
+ */
+function isVisibleSet(set: MediaSet): boolean {
+  return !set.is_showcase && (hasRealContent(set) || Boolean(set.is_trending));
+}
+
 export function LandingPage() {
   useDocumentTitle("");
   const { canAccess } = useAuth();
@@ -98,19 +108,24 @@ export function LandingPage() {
   // no view history yet and must still be able to rank here.
   // The stored access_level is the single source of truth for every poster —
   // an admin toggling Basic/Full Access sees the badge change immediately.
-  const trendingList = [...sets]
-    .filter((s) => hasRealContent(s) && (s.is_trending || (s.views ?? 0) > 0 || s.is_new))
+  const trendingList = sets
+    .filter((s) => isVisibleSet(s) && (s.is_trending || (s.views ?? 0) > 0 || s.is_new))
     .sort(trendingSort)
     .slice(0, 10);
 
-  // SECTION 3: NSFW Image Sets (adult art galleries — comics and games excluded)
+  // SECTION 3: Newest Uploads (fresh releases, right under Trending)
+  // Newest-first view of everything the admin has published with files, plus
+  // sets explicitly flagged trending so a just-created set is never invisible.
+  const newestList = sets.filter(isVisibleSet).sort(newestFirst).slice(0, 10);
+
+  // SECTION 4: NSFW Image Sets (adult art galleries — comics and games excluded)
   // Every published image set with real files is listed, whatever its library
   // category, so an admin who drops images into a set cannot end up with a set
   // that exists but never appears here.
   const nsfwImageSets = sets
     .filter(
       (s) =>
-        hasRealContent(s) &&
+        isVisibleSet(s) &&
         s.category !== "comics" &&
         s.category !== "games" &&
         (s.primary_type === "image" || s.category === "arts"),
@@ -118,7 +133,7 @@ export function LandingPage() {
     .sort(newestFirst)
     .slice(0, 10);
 
-  // SECTION 4: Manga + Comics (Separate digital manga & illustrated comic library)
+  // SECTION 5: Manga + Comics (Separate digital manga & illustrated comic library)
   // Every published comics set is listed as soon as it is created — chapters are
   // uploaded one at a time, so we cannot wait for `asset_count` to climb before
   // showing the set. Bundled showcase posters are still excluded.
@@ -127,7 +142,7 @@ export function LandingPage() {
     .sort(newestFirst)
     .slice(0, 10);
 
-  // SECTION 5: 2D Games (Separate discovery library for 2D games, VNs, RPGs)
+  // SECTION 6: 2D Games (Separate discovery library for 2D games, VNs, RPGs)
   // Games are shown as Coming Soon until launch; their stored access_level still
   // drives the badge, so the admin toggle works here too.
   const gamesList = fillToTen(
@@ -201,7 +216,57 @@ export function LandingPage() {
       </section>
 
       {/* ============================================================
-          SECTION 3 — NSFW IMAGE SETS (Adult art galleries only)
+          SECTION 3 — NEWEST UPLOADS (Fresh releases, moved from navbar)
+          ============================================================ */}
+      <section className="section library-section library-section--newest" id="newest-uploads">
+        <div className="container">
+          <Reveal>
+            <SectionHeader
+              eyebrow="Straight off the upload queue"
+              title="Newest Uploads"
+              description="The freshest releases in the vault, ordered by the moment they landed."
+              action={
+                <Link to="/newest" className="link-arrow">
+                  <span>View all uploads</span>
+                  <ArrowRight size={15} />
+                </Link>
+              }
+            />
+          </Reveal>
+
+          <Reveal delay={90}>
+            {loading ? (
+              <RowSkeleton count={5} />
+            ) : (
+              <Carousel label="Newest Uploads">
+                {newestList.map((set, index) => (
+                  <MediaCard
+                    key={set.id}
+                    set={set}
+                    locked={!canAccess(set.access_level)}
+                    onOpen={open}
+                    onLocked={open}
+                    variant="carousel"
+                    index={index + 1}
+                  />
+                ))}
+                <UnlockMoreCard
+                  category="newest"
+                  count="+1,200"
+                  title="Explore 1,200+ Vault Archives"
+                  subtitle="Daily uncensored drops added to the private library"
+                  badge="NEW DROPS"
+                  variant="carousel"
+                  index={newestList.length + 1}
+                />
+              </Carousel>
+            )}
+          </Reveal>
+        </div>
+      </section>
+
+      {/* ============================================================
+          SECTION 4 — NSFW IMAGE SETS (Adult art galleries only)
           ============================================================ */}
       <section className="section library-section library-section--nsfw" id="nsfw-images">
         <div className="container">
@@ -251,7 +316,7 @@ export function LandingPage() {
       </section>
 
       {/* ============================================================
-          SECTION 4 — MANGA + COMICS (Separate Digital Library)
+          SECTION 5 — MANGA + COMICS (Separate Digital Library)
           ============================================================ */}
       <section className="section library-section library-section--comics" id="manga-comics">
         <div className="container">
@@ -308,7 +373,7 @@ export function LandingPage() {
       </section>
 
       {/* ============================================================
-          SECTION 5 — 2D GAMES (Separate Discovery Library, last row)
+          SECTION 6 — 2D GAMES (Separate Discovery Library, last row)
           ============================================================ */}
       <section className="section library-section library-section--games" id="games">
         <div className="container">

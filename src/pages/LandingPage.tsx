@@ -66,8 +66,6 @@ function fillToTen(real: MediaSet[], showcase: MediaSet[]): MediaSet[] {
   return items.slice(0, 10);
 }
 
-const BASIC_SLOTS = 3;
-
 /**
  * Empty library entries ("Set 15", "manga3") are leftover placeholders from the
  * storefront build. They stay available in the admin library but never appear
@@ -75,18 +73,6 @@ const BASIC_SLOTS = 3;
  */
 function hasRealContent(set: MediaSet): boolean {
   return !set.is_showcase && (set.asset_count ?? 0) > 0;
-}
-
-/**
- * Storefront tiering: the first three posters of every section are Basic
- * Access, the rest are Full Access only. Sections marked `allFull` (2D Games)
- * are Full Access exclusively.
- */
-function tierSection(items: MediaSet[], allFull = false): MediaSet[] {
-  return items.map((set, index) => ({
-    ...set,
-    access_level: allFull || index >= BASIC_SLOTS ? "full" : "basic",
-  }));
 }
 
 export function LandingPage() {
@@ -110,49 +96,43 @@ export function LandingPage() {
   // Real, populated library sets only — no showcase posters, no empty placeholders.
   // The view threshold is a preference, not a gate: a freshly published album has
   // no view history yet and must still be able to rank here.
-  const trendingList = tierSection(
-    [...sets]
-      .filter((s) => hasRealContent(s) && (s.is_trending || (s.views ?? 0) > 0 || s.is_new))
-      .sort(trendingSort)
-      .slice(0, 10),
-  );
+  // The stored access_level is the single source of truth for every poster —
+  // an admin toggling Basic/Full Access sees the badge change immediately.
+  const trendingList = [...sets]
+    .filter((s) => hasRealContent(s) && (s.is_trending || (s.views ?? 0) > 0 || s.is_new))
+    .sort(trendingSort)
+    .slice(0, 10);
 
   // SECTION 3: NSFW Image Sets (adult art galleries — comics and games excluded)
   // Every published image set with real files is listed, whatever its library
   // category, so an admin who drops images into a set cannot end up with a set
   // that exists but never appears here.
-  const nsfwImageSets = tierSection(
-    sets
-      .filter(
-        (s) =>
-          hasRealContent(s) &&
-          s.category !== "comics" &&
-          s.category !== "games" &&
-          (s.primary_type === "image" || s.category === "arts"),
-      )
-      .sort(newestFirst)
-      .slice(0, 10),
-  );
+  const nsfwImageSets = sets
+    .filter(
+      (s) =>
+        hasRealContent(s) &&
+        s.category !== "comics" &&
+        s.category !== "games" &&
+        (s.primary_type === "image" || s.category === "arts"),
+    )
+    .sort(newestFirst)
+    .slice(0, 10);
 
   // SECTION 4: Manga + Comics (Separate digital manga & illustrated comic library)
   // Every published comics set is listed as soon as it is created — chapters are
   // uploaded one at a time, so we cannot wait for `asset_count` to climb before
   // showing the set. Bundled showcase posters are still excluded.
-  const mangaComicsList = tierSection(
-    sets
-      .filter((s) => !s.is_showcase && s.category === "comics")
-      .sort(newestFirst)
-      .slice(0, 10),
-  );
+  const mangaComicsList = sets
+    .filter((s) => !s.is_showcase && s.category === "comics")
+    .sort(newestFirst)
+    .slice(0, 10);
 
   // SECTION 5: 2D Games (Separate discovery library for 2D games, VNs, RPGs)
-  // Games are Full Access only and shown as Coming Soon until launch.
-  const gamesList = tierSection(
-    fillToTen(
-      sets.filter((s) => s.category === "games").sort(newestFirst),
-      showcaseGames,
-    ),
-    true,
+  // Games are shown as Coming Soon until launch; their stored access_level still
+  // drives the badge, so the admin toggle works here too.
+  const gamesList = fillToTen(
+    sets.filter((s) => s.category === "games").sort(newestFirst),
+    showcaseGames,
   ).map((set) => ({ ...set, coming_soon: true }));
 
   return (

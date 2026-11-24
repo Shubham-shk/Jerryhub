@@ -1465,6 +1465,11 @@ h1, h2, h3, h4, h5, h6 {
   border-color: rgba(34, 211, 238, 0.42);
   color: #67e8f9;
 }
+.badge--access-public {
+  background: rgba(34, 197, 94, 0.18);
+  border-color: rgba(34, 197, 94, 0.42);
+  color: #86efac;
+}
 .badge--access-full {
   background: rgba(255, 45, 120, 0.18);
   border-color: rgba(255, 45, 120, 0.45);

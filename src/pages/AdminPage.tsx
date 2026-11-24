@@ -43,6 +43,7 @@ import { fetchAllMediaSets, fetchSetAssets, isExternalUrl, thumbnailUrl } from "
   PATREON_TIER_MAPPING_CONFIGURED,
 } from "../lib/config";
 import { accessLabel, normalizeAccessLevel, resolveAccessLevel } from "../lib/access";
+import { setMediaSetAccess } from "../lib/contentCms";
 import { requireSupabase } from "../lib/supabase";
 import type {
   AccessLevel,
@@ -456,14 +457,11 @@ export function AdminPage() {
 
   async function updateAccess(set: MediaSet, accessLevel: AccessLevel) {
     if (!requireLive()) return;
-    const client = requireSupabase();
     setBusy(`${set.id}-access`);
     try {
-      const update = await client
-        .from("media_sets")
-        .update({ access_level: accessLevel })
-        .eq("id", set.id);
-      if (update.error) throw update.error;
+      // Updates the storefront row and the linked album together so the badge
+      // the homepage reads is never out of step with the Sets & Packs editor.
+      await setMediaSetAccess(set.id, accessLevel);
       setSets((current) =>
         current.map((item) => (item.id === set.id ? { ...item, access_level: accessLevel } : item)),
       );

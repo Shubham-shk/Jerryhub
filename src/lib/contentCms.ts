@@ -345,6 +345,30 @@ export async function setContentSetAccess(
   if (mediaError) throw new Error(mediaError.message);
 }
 
+/**
+ * Sets the access level from the storefront side (Admin → Sets list) and
+ * mirrors it onto the linked album so the Sets & Packs editor and the detail
+ * page never show a stale value. Both directions are kept in sync by the
+ * database triggers as well.
+ */
+export async function setMediaSetAccess(
+  mediaSetId: string,
+  accessLevel: AccessLevel,
+): Promise<void> {
+  const db = client();
+  const { error } = await db
+    .from("media_sets")
+    .update({ access_level: accessLevel })
+    .eq("id", mediaSetId);
+  if (error) throw new Error(error.message);
+
+  const { error: albumError } = await db
+    .from("content_sets")
+    .update({ access_level: accessLevel })
+    .eq("media_set_id", mediaSetId);
+  if (albumError) throw new Error(albumError.message);
+}
+
 /** Album images for a storefront set, in display order. */
 export async function fetchAlbumImagesForMediaSet(
   mediaSetId: string,

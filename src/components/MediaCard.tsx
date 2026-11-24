@@ -1,6 +1,7 @@
 import { useState, type CSSProperties, type MouseEvent } from "react";
 import { BookOpen, Clock, Gamepad2, Image as ImageIcon, Lock, Play } from "lucide-react";
 import { thumbnailUrl } from "../lib/api";
+import { accessLabel } from "../lib/access";
 import type { MediaCategory, MediaSet, MediaType } from "../lib/types";
 import { useReveal } from "../hooks/useReveal";
 
@@ -134,15 +135,11 @@ export function MediaCard({
             </div>
           )}
 
-          {/* Membership badge — every poster states its access level */}
+          {/* Membership badge — every poster states its stored access level */}
           <div className="poster-badges">
-            <span
-              className={`badge ${
-                set.access_level === "full" ? "badge--access-full" : "badge--access-basic"
-              }`}
-            >
+            <span className={`badge badge--access-${set.access_level}`}>
               {locked ? <Lock size={10} /> : null}
-              {set.access_level === "full" ? "Full Access" : "Basic Access"}
+              {accessLabel(set.access_level)}
             </span>
           </div>
 

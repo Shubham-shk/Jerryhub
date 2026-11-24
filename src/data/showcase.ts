@@ -217,7 +217,7 @@ const gamesSeeds: ShowcaseSeed[] = [
       "A special-edition visual novel where every route opens a new scene. Multiple endings, one very long night.",
     image: 8,
     primary: "video",
-    access: "basic",
+    access: "full",
   },
   {
     title: "Stepsis Thinks She Is Chubby",
@@ -226,7 +226,7 @@ const gamesSeeds: ShowcaseSeed[] = [
       "A playful game with expressive sprites, unlockable gallery scenes and multiple endings.",
     image: 9,
     primary: "video",
-    access: "basic",
+    access: "full",
   },
   {
     title: "Sylphiette Greyrat",
